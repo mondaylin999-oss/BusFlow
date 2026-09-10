@@ -1,0 +1,511 @@
+/* ==========================================================================
+   BiteN Go — "Nexus Transit & Dining" design system
+   Ported from the Stitch design pack (stitch_nexus_smart_canteen_ferry_system)
+   into Tailwind v4 theme tokens, so every screen can use the same names the
+   design uses: bg-surface, text-on-surface-variant, bg-secondary-container…
+
+   Colour logic (from the design brief):
+     Core UI          near-black   navigation, headings, primary actions
+     Canteen context  emerald      menus, wallet top-ups, successful states
+     Ferry context    blue         vessels, seats, departure times
+     Alerts           amber / red  low balance, delays, ASAP tickets
+   ========================================================================== */
+
+@import "tailwindcss";
+
+@theme {
+  /* --- surfaces ------------------------------------------------------- */
+  --color-surface: #f7f9fb;
+  --color-surface-dim: #d8dadc;
+  --color-surface-bright: #f7f9fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container: #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-variant: #e0e3e5;
+  --color-background: #f7f9fb;
+
+  /* --- foreground ----------------------------------------------------- */
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #45464d;
+  --color-on-background: #191c1e;
+  --color-inverse-surface: #2d3133;
+  --color-inverse-on-surface: #eff1f3;
+  --color-outline: #76777d;
+  --color-outline-variant: #c6c6cd;
+
+  /* --- primary (core UI) ---------------------------------------------- */
+  --color-primary: #000000;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #131b2e;
+  --color-on-primary-container: #7c839b;
+  --color-inverse-primary: #bec6e0;
+  --color-primary-fixed: #dae2fd;
+  --color-primary-fixed-dim: #bec6e0;
+  --color-on-primary-fixed: #131b2e;
+  --color-on-primary-fixed-variant: #3f465c;
+
+  /* --- secondary (canteen) -------------------------------------------- */
+  --color-secondary: #006c49;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary-container: #00714d;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
+
+  /* --- tertiary (ferry) ------------------------------------------------ */
+  --color-tertiary: #0b4a75;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #cce5ff;
+  --color-on-tertiary-container: #00405f;
+  --color-tertiary-fixed: #cce5ff;
+  --color-tertiary-fixed-dim: #93ccff;
+  --color-on-tertiary-fixed: #001d31;
+  --color-on-tertiary-fixed-variant: #004b73;
+
+  /* --- status --------------------------------------------------------- */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-warning: #b45309;
+  --color-warning-container: #fef3c7;
+  --color-on-warning-container: #7c2d12;
+
+  /* --- typography ------------------------------------------------------ */
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    monospace;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 1.2;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 1.4;
+  --text-headline-md--font-weight: 600;
+  --text-body-base: 16px;
+  --text-body-base--line-height: 1.5;
+  --text-data: 14px;
+  --text-data--line-height: 1.2;
+  --text-data--font-weight: 500;
+  --text-label: 12px;
+  --text-label--line-height: 1.1;
+  --text-label--font-weight: 600;
+
+  /* --- shape & rhythm (8px grid) --------------------------------------- */
+  --radius-sm: 0.25rem;
+  --radius-DEFAULT: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --spacing-gutter: 16px;
+  --spacing-container-margin: 24px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 32px;
+
+  /* --- elevation ------------------------------------------------------- */
+  --shadow-card: 0 4px 12px rgb(0 0 0 / 0.02);
+  --shadow-raised: 0 12px 24px rgb(0 0 0 / 0.05);
+}
+
+/* --------------------------------------------------------------------------
+   DARK MODE
+   --------------------------------------------------------------------------
+   One class on <html> (set by src/lib/prefs.tsx) repaints the whole app,
+   because every screen is built from the tokens above rather than from raw
+   colours. The two context colours keep their meaning — emerald is still the
+   canteen, blue is still the ferry — just lifted so they read on a dark
+   surface, where a dark ink colour would vanish.
+   -------------------------------------------------------------------------- */
+html.dark {
+  /* --- surfaces: near-black, layered by lightness ---------------------- */
+  --color-surface: #101416;
+  --color-surface-dim: #0b0e10;
+  --color-surface-bright: #1a1f22;
+  --color-surface-container-lowest: #161b1e;
+  --color-surface-container-low: #1a1f22;
+  --color-surface-container: #1e2427;
+  --color-surface-container-high: #252b2f;
+  --color-surface-container-highest: #2d3438;
+  --color-surface-variant: #2d3438;
+  --color-background: #101416;
+
+  /* --- foreground ------------------------------------------------------ */
+  --color-on-surface: #e6e9eb;
+  --color-on-surface-variant: #b3bbc0;
+  --color-on-background: #e6e9eb;
+  --color-inverse-surface: #e6e9eb;
+  --color-inverse-on-surface: #1a1f22;
+  --color-outline: #8a9296;
+  --color-outline-variant: #3a4247;
+
+  /* --- primary (core UI): white ink on dark ---------------------------- */
+  --color-primary: #e6e9eb;
+  --color-on-primary: #101416;
+  --color-primary-container: #2a3550;
+  --color-on-primary-container: #c3cbe4;
+  --color-primary-fixed: #2a3550;
+  --color-primary-fixed-dim: #3f4a68;
+  --color-on-primary-fixed: #dae2fd;
+  --color-on-primary-fixed-variant: #bec6e0;
+
+  /* --- secondary (canteen): emerald, lifted ---------------------------- */
+  --color-secondary: #4edea3;
+  --color-on-secondary: #00281a;
+  --color-secondary-container: #00503a;
+  --color-on-secondary-container: #8ff8c8;
+  --color-secondary-fixed: #00503a;
+  --color-secondary-fixed-dim: #006c49;
+  --color-on-secondary-fixed: #8ff8c8;
+  --color-on-secondary-fixed-variant: #6cf8bb;
+
+  /* --- tertiary (ferry): blue, lifted ---------------------------------- */
+  --color-tertiary: #7fc4f5;
+  --color-on-tertiary: #00304d;
+  --color-tertiary-container: #0b3c5d;
+  --color-on-tertiary-container: #cbe6fb;
+  --color-tertiary-fixed: #0b3c5d;
+  --color-tertiary-fixed-dim: #14567f;
+  --color-on-tertiary-fixed: #cbe6fb;
+  --color-on-tertiary-fixed-variant: #93ccff;
+
+  /* --- alerts ---------------------------------------------------------- */
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #6d1a17;
+  --color-on-error-container: #ffdad6;
+  --color-warning: #f0b357;
+  --color-warning-container: #4a3410;
+  --color-on-warning-container: #fde3ae;
+
+  /* Shadows do almost nothing on a dark ground; borders carry the depth. */
+  --shadow-card: 0 4px 12px rgb(0 0 0 / 0.35);
+  --shadow-raised: 0 12px 24px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+/* The map is the one part with its own light imagery. Take the glare off the
+   tiles in dark mode without touching the route line, the pins or the text. */
+html.dark .leaflet-tile {
+  filter: brightness(0.78) contrast(1.05) saturate(0.9);
+}
+
+html.dark .leaflet-container {
+  background: var(--color-surface-container);
+}
+
+html.dark .leaflet-container .leaflet-control-attribution {
+  background: rgb(16 20 22 / 0.82);
+  color: var(--color-on-surface-variant);
+}
+
+html.dark .leaflet-bar a,
+html.dark .leaflet-control-zoom a {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+  border-color: var(--color-outline-variant);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Numbers must not "jump" while they update — tabular monospace, as the
+     design brief asks for money, times and ticket ids. */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Components — the handful of shapes every screen repeats.
+   -------------------------------------------------------------------------- */
+@layer components {
+  .card {
+    background: var(--color-surface-container-lowest);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-pad {
+    padding: 16px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: var(--radius-DEFAULT);
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      border-color 150ms ease,
+      transform 100ms ease;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-container);
+  }
+
+  .btn-canteen {
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+
+  .btn-canteen:hover:not(:disabled) {
+    background: var(--color-on-secondary-container);
+  }
+
+  .btn-ferry {
+    background: var(--color-tertiary);
+    color: var(--color-on-tertiary);
+  }
+
+  .btn-ferry:hover:not(:disabled) {
+    background: var(--color-on-tertiary-fixed-variant);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-on-surface);
+    border-color: var(--color-outline-variant);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-surface-container-high);
+  }
+
+  .btn-danger {
+    background: var(--color-error-container);
+    color: var(--color-on-error-container);
+  }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-on-surface-variant);
+    margin-bottom: 6px;
+  }
+
+  .input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: var(--radius-DEFAULT);
+    border: 1px solid var(--color-outline-variant);
+    background: var(--color-surface-container-lowest);
+    color: var(--color-on-surface);
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  textarea.input {
+    height: auto;
+    padding: 10px 12px;
+    min-height: 84px;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--color-secondary) 30%, transparent);
+  }
+
+  /* Alternating rows, as the design's data-table rule asks. */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  /* A money column is never wrapped or cut: the table scrolls sideways inside
+     its card instead (every table here sits in an .overflow-x-auto wrapper),
+     so a figure in the billions stays a figure in the billions. */
+  .data-table td.tabular,
+  .data-table th.text-right {
+    white-space: nowrap;
+  }
+
+  .data-table th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-on-surface-variant);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-outline-variant);
+    white-space: nowrap;
+  }
+
+  .data-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-surface-container-high);
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr:nth-child(even) {
+    background: var(--color-surface);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius-DEFAULT);
+    color: var(--color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .nav-item:hover {
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface);
+  }
+
+  .nav-item-active {
+    background: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+
+  .nav-item-active-ferry {
+    background: var(--color-tertiary-container);
+    color: var(--color-on-tertiary-container);
+  }
+}
+
+/* A slim scrollbar for the kitchen board's lanes. */
+.kds-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.kds-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 9999px;
+}
+
+@keyframes bng-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.pulse-soft {
+  animation: bng-pulse 1.8s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Leaflet — the real road map (src/components/RouteMap.tsx)
+   --------------------------------------------------------------------------
+   Leaflet stacks its own layers from z-index 400 and its zoom/attribution
+   controls up to 1000. Left alone, a map would therefore float ABOVE the
+   fixed top bar and the phone bottom bar. Giving the map container its own
+   stacking context keeps every part of Leaflet inside the card it lives in.
+   ========================================================================== */
+.leaflet-container {
+  z-index: 0;
+  isolation: isolate;
+  /* Inter, like the rest of the interface, instead of Leaflet's default. */
+  font: inherit;
+  background: var(--color-surface-container-low);
+}
+
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+/* Our numbered pins are plain HTML (L.divIcon), so remove the white box
+   Leaflet would otherwise draw behind them. */
+.leaflet-div-icon {
+  background: transparent;
+  border: 0;
+}
+
+/* The turn-by-turn itinerary panel is switched off in code; this makes sure
+   no stray copy of it can cover the map either. */
+.leaflet-routing-container {
+  display: none;
+}

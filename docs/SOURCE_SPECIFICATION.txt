@@ -1,0 +1,4395 @@
+# MASTER PROJECT SPECIFICATION
+
+# Multi-Branch Bus Transportation Management & Online Ticketing System
+
+## 0. IMPORTANT INSTRUCTION TO THE AI CODING ASSISTANT
+
+You are working on an existing software project.
+
+The existing project is the reference implementation for:
+
+* visual design
+* component patterns
+* application shell
+* authentication style
+* role-based navigation
+* API communication pattern
+* PostgreSQL approach
+* reusable UI components
+* responsive behavior
+* dashboard style
+* map integration
+* transaction/history concepts
+
+DO NOT throw away the existing architecture without a strong technical reason.
+
+DO NOT rewrite the entire project simply because the business domain is changing.
+
+DO NOT invent a completely different frontend architecture.
+
+DO NOT replace working components unnecessarily.
+
+First understand the existing codebase, then extend/refactor it carefully.
+
+The goal is to transform the existing concept into a:
+
+**Multi-Branch Bus Transportation Management & Online Ticket Booking System**
+
+The finished application must be capable of managing one large transportation company with many cities, towns, branches, bus gates, counters, buses, routes, trips, employees, agents, drivers, conductors and passengers.
+
+The owner/head office must be able to control the entire organization from one central administration portal.
+
+---
+
+# 1. PRODUCT NAME
+
+Use a configurable company/product name.
+
+Default working name:
+
+**BiteN Go Bus**
+
+The company name must NOT be hard-coded throughout the application.
+
+Create a central configuration/branding system so the company can later change:
+
+* company name
+* logo
+* phone number
+* email
+* address
+* primary branding
+* ticket footer
+* receipt footer
+
+---
+
+# 2. PRODUCT VISION
+
+This is a centralized transportation operating system.
+
+One company may have:
+
+* many regions
+* many cities
+* many towns
+* many branches
+* many bus gates
+* many ticket counters
+* many buses
+* many employees
+* many agents
+* many drivers
+* many conductors
+* many routes
+* many scheduled trips
+* thousands of passengers
+* thousands of bookings
+
+All operational data must live in one central PostgreSQL database.
+
+Example:
+
+Company
+→ Region
+→ City/Town
+→ Branch/Gate
+→ Counter
+→ Staff
+
+Transportation:
+
+Route
+→ Stops
+→ Trip
+→ Bus
+→ Seat Layout
+→ Seat Inventory
+→ Booking
+→ Passenger
+
+Users:
+
+Super Admin
+→ Head Office Admin
+→ Regional Manager
+→ Branch Manager
+→ Counter Staff
+→ Booking Agent
+→ Driver
+→ Conductor
+→ Customer
+
+---
+
+# 3. CORE DESIGN PRINCIPLE
+
+Separate:
+
+## A. ORGANIZATION
+
+This describes where a person or resource belongs.
+
+Company
+→ Region
+→ City
+→ Branch/Gate
+→ Counter
+
+## B. ROLE
+
+This describes what a person is allowed to do.
+
+A user can be:
+
+* super_admin
+* head_office_admin
+* regional_manager
+* branch_manager
+* counter_staff
+* agent
+* driver
+* conductor
+* customer
+* finance_staff
+* operations_staff
+
+DO NOT use role names as substitutes for organization hierarchy.
+
+For example:
+
+A Branch Manager belongs to:
+
+Company A
+→ Yangon Region
+→ Yangon City
+→ Central Gate
+
+and has role:
+
+branch_manager
+
+---
+
+# 4. MULTI-BRANCH REQUIREMENT
+
+The system must be designed as a centralized multi-branch platform.
+
+Each branch/gate can have:
+
+* its own address
+* phone number
+* manager
+* counters
+* staff
+* operating hours
+* assigned buses
+* assigned routes
+* booking activity
+* daily sales
+* expenses
+* cash records
+
+The head office must be able to view all branches.
+
+A branch manager must only see permitted branches.
+
+Counter staff must only see the counter/branch assigned to them.
+
+Agents must see their own bookings, commission and assigned operations.
+
+Customers must only see their own bookings and customer information.
+
+---
+
+# 5. ROLE MODEL
+
+## 5.1 SUPER ADMIN
+
+Highest-level owner/system administrator.
+
+Permissions:
+
+* manage company
+* manage all regions
+* manage all cities/towns
+* manage all branches/gates
+* manage all counters
+* manage all users
+* manage roles
+* manage permissions
+* manage buses
+* manage drivers
+* manage conductors
+* manage routes
+* manage stops
+* manage trips
+* manage schedules
+* manage fares
+* view all bookings
+* modify/cancel bookings when authorized
+* view all financial information
+* manage agents
+* manage commissions
+* manage refunds
+* view reports
+* view audit logs
+* system settings
+* branding
+* notification settings
+
+Must be able to switch organization scope:
+
+All Company
+→ Region
+→ City
+→ Branch
+→ Counter
+
+---
+
+# 5.2 HEAD OFFICE ADMIN
+
+Similar to super admin but without critical system-level settings.
+
+Can:
+
+* view all branches
+* manage operational data
+* manage users
+* manage buses
+* manage routes
+* manage schedules
+* manage trips
+* monitor bookings
+* monitor revenue
+* manage operational reports
+* view branch performance
+
+May NOT:
+
+* delete the entire company
+* change root system configuration
+* remove the super admin
+* access restricted security settings
+
+---
+
+# 5.3 REGIONAL MANAGER
+
+Responsible for a group of cities/branches.
+
+Can:
+
+* see assigned region
+* view assigned branches
+* view branch revenue
+* view bookings
+* view buses
+* view trips
+* view staff
+* review branch performance
+* approve selected operational requests
+
+Cannot see unrelated regions.
+
+---
+
+# 5.4 BRANCH MANAGER
+
+Responsible for one or more assigned branches/gates.
+
+Can:
+
+* view branch dashboard
+* manage counters
+* manage branch staff
+* see branch bookings
+* sell tickets
+* cancel tickets according to permission
+* reschedule according to permission
+* view branch buses
+* view branch trips
+* view branch revenue
+* manage branch cash drawer
+* print reports
+* monitor departures
+* monitor passenger manifests
+
+Cannot modify global company configuration.
+
+---
+
+# 5.5 COUNTER STAFF
+
+Front-desk ticket seller.
+
+Can:
+
+* search routes
+* search schedules
+* view seat map
+* create booking
+* reserve seat
+* issue ticket
+* print ticket
+* search booking
+* reprint ticket
+* cancel booking when permission exists
+* change passenger information when permitted
+* record payment
+* close cash drawer
+* view own sales
+
+Cannot:
+
+* manage users
+* create buses
+* create global routes
+* access company-wide financial information
+* change system configuration
+
+---
+
+# 5.6 AGENT
+
+External/internal ticket-selling agent.
+
+Can:
+
+* search available trips
+* view seat availability
+* create booking
+* hold seat
+* issue ticket
+* cancel allowed bookings
+* view own customers
+* view own booking history
+* view commission
+* view wallet/credit balance
+* view statements
+
+Must NOT see confidential company-wide financial information.
+
+Agent data must be isolated from other agents.
+
+---
+
+# 5.7 DRIVER
+
+Driver operational portal.
+
+Can:
+
+* view assigned bus
+* view assigned trips
+* view schedule
+* view route
+* view stops
+* view passenger manifest
+* start trip
+* mark departure
+* update trip status
+* mark arrival
+* report vehicle problem
+* submit incident report
+* view assigned duties
+
+Driver cannot:
+
+* edit company-wide route configuration
+* modify fares
+* manage users
+* access financial data
+
+---
+
+# 5.8 CONDUCTOR
+
+Can:
+
+* view assigned trip
+* view passenger list
+* check passengers
+* mark boarded
+* mark no-show
+* scan/verify ticket
+* record onboard passengers
+* view seat map for assigned trip
+* report trip issues
+
+---
+
+# 5.9 FINANCE STAFF
+
+Optional role.
+
+Can:
+
+* view payments
+* view refunds
+* view revenue
+* view commissions
+* view branch cash
+* view settlement
+* record expenses
+* generate accounting reports
+
+Cannot alter transportation configuration unless separately permitted.
+
+---
+
+# 5.10 CUSTOMER
+
+Public user.
+
+Can:
+
+* register/login
+* search trips
+* select route
+* select date
+* view bus
+* view seat map
+* choose seat
+* enter passenger information
+* pay
+* receive ticket
+* view bookings
+* cancel according to policy
+* request refund according to policy
+* view ticket
+* download/print ticket
+* update profile
+
+Customer can only access their own account and bookings.
+
+---
+
+# 6. ROLE-BASED ACCESS CONTROL
+
+Do NOT rely only on frontend hiding.
+
+Every protected operation must be checked on the backend.
+
+Permissions must be represented explicitly.
+
+Example:
+
+user
+role
+permissions
+
+Possible permission names:
+
+users.view
+users.create
+users.update
+users.disable
+
+branches.view
+branches.create
+branches.update
+
+counters.view
+counters.create
+counters.update
+
+buses.view
+buses.create
+buses.update
+buses.assign
+
+routes.view
+routes.create
+routes.update
+routes.publish
+
+trips.view
+trips.create
+trips.update
+trips.cancel
+
+bookings.view
+bookings.create
+bookings.cancel
+bookings.reschedule
+bookings.refund
+
+finance.view
+finance.refund
+finance.settlement
+
+reports.view
+reports.export
+
+audit.view
+
+---
+
+# 7. ORGANIZATION DATABASE MODEL
+
+Create these core organization tables.
+
+## companies
+
+Fields:
+
+id
+name
+code
+logo_url
+phone
+email
+address
+timezone
+currency
+status
+created_at
+updated_at
+
+---
+
+## regions
+
+Fields:
+
+id
+company_id
+name
+code
+manager_user_id
+status
+created_at
+updated_at
+
+---
+
+## cities
+
+Fields:
+
+id
+region_id
+name
+code
+status
+created_at
+updated_at
+
+---
+
+## branches
+
+Use "branch" as the primary organizational concept.
+
+A branch may also be displayed as:
+
+* Bus Gate
+* Terminal
+* Station
+* Office
+
+Fields:
+
+id
+company_id
+region_id
+city_id
+name
+code
+branch_type
+address
+latitude
+longitude
+phone
+email
+manager_user_id
+opening_time
+closing_time
+status
+created_at
+updated_at
+
+---
+
+## counters
+
+Fields:
+
+id
+branch_id
+name
+code
+counter_number
+staff_user_id
+status
+created_at
+updated_at
+
+A branch may have many counters.
+
+---
+
+# 8. USERS DATABASE
+
+## users
+
+Fields:
+
+id
+open_id
+username
+password_hash
+full_name
+phone
+email
+role_id
+company_id
+region_id
+city_id
+branch_id
+counter_id
+status
+avatar_url
+last_signed_in
+created_at
+updated_at
+
+Never store plaintext passwords.
+
+Use secure password hashing.
+
+---
+
+# 9. ROLES
+
+Create:
+
+roles
+
+Fields:
+
+id
+name
+display_name
+description
+is_system_role
+created_at
+
+And:
+
+permissions
+
+Fields:
+
+id
+key
+name
+description
+
+And:
+
+role_permissions
+
+Fields:
+
+role_id
+permission_id
+
+---
+
+# 10. USER ASSIGNMENTS
+
+A user may need to be assigned to:
+
+* company
+* region
+* city
+* branch
+* counter
+
+The backend must enforce scope.
+
+Example:
+
+A Branch Manager assigned to Branch A must not request Branch B data simply by changing an ID in the URL.
+
+---
+
+# 11. BUS/FLEET MANAGEMENT
+
+Create:
+
+## buses
+
+Fields:
+
+id
+company_id
+bus_code
+plate_number
+registration_number
+bus_type
+brand
+model
+year
+total_seats
+status
+current_branch_id
+created_at
+updated_at
+
+Statuses:
+
+active
+inactive
+maintenance
+retired
+
+---
+
+# 12. BUS SEAT CONFIGURATION
+
+Do not hard-code seats.
+
+Create:
+
+## seat_layouts
+
+Fields:
+
+id
+bus_id
+name
+rows
+columns
+layout_type
+created_at
+
+## seats
+
+Fields:
+
+id
+bus_id
+seat_number
+row_number
+column_number
+seat_type
+position
+is_active
+
+Seat types may include:
+
+normal
+vip
+disabled_access
+driver
+conductor
+
+Seat positions may include:
+
+window
+aisle
+middle
+
+The UI must generate the seat map from database data.
+
+---
+
+# 13. STAFF ASSIGNMENTS
+
+Create:
+
+## driver_profiles
+
+id
+user_id
+license_number
+license_expiry
+phone
+status
+availability
+
+## conductor_profiles
+
+id
+user_id
+employee_code
+phone
+status
+
+---
+
+# 14. ROUTES
+
+Create:
+
+## routes
+
+Fields:
+
+id
+company_id
+route_code
+name
+origin_city_id
+destination_city_id
+origin_name
+destination_name
+distance_km
+estimated_minutes
+status
+created_by
+created_at
+updated_at
+
+A route is the reusable definition.
+
+Example:
+
+YGN-MDY
+
+Yangon → Mandalay
+
+---
+
+# 15. ROUTE STOPS
+
+Create:
+
+## route_stops
+
+Fields:
+
+id
+route_id
+stop_order
+city_id
+name
+latitude
+longitude
+arrival_offset_minutes
+departure_offset_minutes
+
+A route can contain many stops.
+
+Example:
+
+Yangon
+Bago
+Taungoo
+Naypyidaw
+Mandalay
+
+---
+
+# 16. MAP DATA
+
+Keep the useful map idea from the existing BiteN Go project.
+
+Use:
+
+Leaflet
+
+and optionally:
+
+OSRM
+
+for road geometry/routing.
+
+Store:
+
+latitude
+longitude
+route nodes
+stop positions
+
+Allow administrators to visually inspect the route on a map.
+
+Do not require the user to manually enter a map URL for basic map functionality.
+
+---
+
+# 17. BUS SERVICE / SCHEDULE
+
+A route is not a trip.
+
+Separate:
+
+Route
+from
+Service/Schedule
+from
+Trip.
+
+Example:
+
+Route:
+Yangon → Mandalay
+
+Schedule:
+Every day at 06:30
+
+Actual Trip:
+September 8, 2026 at 06:30
+
+---
+
+# 18. SERVICE SCHEDULES
+
+Create:
+
+## schedules
+
+Fields:
+
+id
+company_id
+route_id
+bus_id
+schedule_code
+departure_time
+arrival_time
+days_of_week
+effective_from
+effective_to
+fare_id
+status
+created_at
+updated_at
+
+A schedule describes recurring service.
+
+---
+
+# 19. TRIPS
+
+Create:
+
+## trips
+
+Fields:
+
+id
+schedule_id
+route_id
+bus_id
+trip_date
+departure_time
+expected_arrival_time
+actual_departure_time
+actual_arrival_time
+status
+driver_id
+conductor_id
+origin_branch_id
+destination_branch_id
+created_at
+updated_at
+
+Trip status:
+
+scheduled
+boarding
+departed
+in_transit
+arrived
+completed
+cancelled
+delayed
+
+---
+
+# 20. TRIP SEAT INVENTORY
+
+Each trip must have an independent seat inventory.
+
+Create:
+
+## trip_seats
+
+Fields:
+
+id
+trip_id
+seat_id
+status
+booking_id
+held_until
+updated_at
+
+Statuses:
+
+available
+held
+booked
+blocked
+checked_in
+
+IMPORTANT:
+
+A seat belongs to the physical bus.
+
+A trip has a snapshot/use of those seats.
+
+Do not calculate availability from a simple static bus total.
+
+---
+
+# 21. FARE MANAGEMENT
+
+Create:
+
+## fares
+
+Fields:
+
+id
+company_id
+route_id
+origin_stop_id
+destination_stop_id
+amount
+currency
+effective_from
+effective_to
+status
+created_at
+updated_at
+
+Fare may depend on:
+
+origin
+destination
+route
+seat type
+
+For example:
+
+Yangon → Bago = 5,000
+Yangon → Mandalay = 20,000
+
+---
+
+# 22. PASSENGERS
+
+Customers and passengers should be conceptually separate.
+
+A customer may purchase a ticket for:
+
+* themselves
+* another person
+* family member
+* employee
+* customer
+
+Create:
+
+## passengers
+
+Fields:
+
+id
+full_name
+phone
+national_id_optional
+gender_optional
+age_optional
+emergency_contact_optional
+created_at
+updated_at
+
+Avoid collecting unnecessary sensitive information.
+
+---
+
+# 23. BOOKINGS
+
+Create:
+
+## bookings
+
+Fields:
+
+id
+booking_reference
+customer_user_id
+trip_id
+status
+subtotal
+discount
+tax
+total_amount
+currency
+payment_status
+booking_source
+branch_id
+counter_id
+agent_id
+created_by_user_id
+created_at
+updated_at
+
+Booking source:
+
+online
+counter
+agent
+admin
+
+Booking status:
+
+pending
+held
+confirmed
+checked_in
+completed
+cancelled
+refunded
+no_show
+
+---
+
+# 24. BOOKING PASSENGERS
+
+Create:
+
+## booking_passengers
+
+Fields:
+
+id
+booking_id
+passenger_id
+seat_id
+fare_id
+amount
+boarding_stop_id
+dropping_stop_id
+status
+created_at
+
+One booking can contain multiple passengers.
+
+---
+
+# 25. BOOKING REFERENCE
+
+Every booking must receive a unique human-readable booking reference.
+
+Example:
+
+BNG-20260908-000123
+
+The booking reference must be searchable.
+
+Search by:
+
+booking reference
+passenger name
+phone
+seat
+trip
+date
+
+---
+
+# 26. TICKETS
+
+Create:
+
+## tickets
+
+Fields:
+
+id
+booking_id
+ticket_number
+qr_code
+issued_at
+issued_by
+status
+
+Ticket statuses:
+
+valid
+used
+cancelled
+expired
+
+Generate a printable ticket.
+
+Ticket should show:
+
+company name
+logo
+booking reference
+ticket number
+passenger
+route
+origin
+destination
+date
+departure time
+bus
+seat
+boarding gate
+fare
+payment status
+QR code
+
+---
+
+# 27. BOARDING
+
+Create:
+
+## boarding_records
+
+Fields:
+
+id
+trip_id
+booking_passenger_id
+status
+checked_by
+checked_at
+
+Statuses:
+
+not_boarded
+boarded
+no_show
+
+Conductor must be able to check passengers.
+
+---
+
+# 28. PAYMENTS
+
+Create:
+
+## payments
+
+Fields:
+
+id
+booking_id
+payment_reference
+method
+amount
+currency
+status
+paid_at
+processed_by
+created_at
+
+Methods may include:
+
+cash
+bank_transfer
+mobile_wallet
+card
+online_gateway
+
+Do not assume one payment method forever.
+
+Make payment methods configurable.
+
+---
+
+# 29. REFUNDS
+
+Create:
+
+## refunds
+
+Fields:
+
+id
+payment_id
+booking_id
+amount
+reason
+status
+requested_by
+approved_by
+processed_at
+created_at
+
+Refunds must create an audit trail.
+
+Do not simply delete a payment.
+
+---
+
+# 30. AGENTS
+
+Create:
+
+## agents
+
+Fields:
+
+id
+user_id
+agent_code
+branch_id
+commission_type
+commission_value
+credit_limit
+wallet_balance
+status
+created_at
+updated_at
+
+Commission types:
+
+percentage
+fixed_per_ticket
+
+---
+
+# 31. AGENT COMMISSIONS
+
+Create:
+
+## agent_commissions
+
+Fields:
+
+id
+agent_id
+booking_id
+amount
+rate
+status
+created_at
+
+Agents must be able to see their commission statement.
+
+Company administrators must be able to see agent performance.
+
+---
+
+# 32. CASH DRAWERS
+
+Keep the useful transaction-history concept from the existing project.
+
+Create:
+
+## cash_drawers
+
+Fields:
+
+id
+branch_id
+counter_id
+opened_by
+opening_balance
+closing_balance
+status
+opened_at
+closed_at
+
+A counter may have a daily cash drawer.
+
+---
+
+# 33. FINANCIAL TRANSACTIONS
+
+Create:
+
+## transactions
+
+Fields:
+
+id
+company_id
+branch_id
+counter_id
+agent_id
+booking_id
+payment_id
+type
+direction
+amount
+currency
+description
+created_by
+occurred_at
+created_at
+
+Transactions should be immutable.
+
+Never edit historical financial transactions directly.
+
+Correct errors by creating reversal/adjustment transactions.
+
+---
+
+# 34. EXPENSES
+
+Create:
+
+## expenses
+
+Fields:
+
+id
+company_id
+branch_id
+category
+amount
+description
+receipt_url_optional
+created_by
+approved_by
+expense_date
+created_at
+
+Examples:
+
+fuel
+repair
+salary
+office
+rent
+utilities
+other
+
+---
+
+# 35. VEHICLE MAINTENANCE
+
+Keep the useful maintenance workflow from BiteN Go.
+
+Create:
+
+## vehicle_maintenance
+
+Fields:
+
+id
+bus_id
+reported_by
+assigned_to
+issue
+priority
+status
+resolution_note
+created_at
+started_at
+resolved_at
+
+Statuses:
+
+reported
+approved
+in_progress
+resolved
+cancelled
+
+---
+
+# 36. NOTIFICATIONS
+
+Create a notification system.
+
+## notifications
+
+Fields:
+
+id
+user_id
+title
+message
+type
+related_entity
+related_id
+read_at
+created_at
+
+Use notifications for:
+
+booking confirmed
+booking cancelled
+trip delayed
+trip cancelled
+payment received
+refund processed
+maintenance issue
+new agent booking
+branch announcement
+
+---
+
+# 37. AUDIT LOG
+
+Create:
+
+## audit_logs
+
+Fields:
+
+id
+user_id
+action
+entity_type
+entity_id
+old_data
+new_data
+ip_address_optional
+created_at
+
+Log important actions:
+
+login
+logout
+user creation
+role change
+booking creation
+booking cancellation
+refund
+fare change
+route change
+trip cancellation
+payment adjustment
+branch change
+bus change
+
+Audit logs must be append-only.
+
+---
+
+# 38. DASHBOARD SYSTEM
+
+Different roles need different dashboards.
+
+Do not create one giant dashboard for everyone.
+
+---
+
+# 39. SUPER ADMIN DASHBOARD
+
+Main cards:
+
+Total Revenue
+Today's Revenue
+Tickets Sold
+Today's Trips
+Active Buses
+Branches
+Counters
+Agents
+Customers
+
+Charts:
+
+Revenue trend
+Ticket sales trend
+Bookings by branch
+Top routes
+Occupancy rate
+Agent performance
+Branch performance
+
+Operational panel:
+
+Upcoming departures
+Delayed trips
+Maintenance alerts
+Low-performing branches
+Pending refunds
+Pending approvals
+
+Filters:
+
+Today
+Yesterday
+This Week
+This Month
+Custom Date
+
+Organization filters:
+
+All
+Region
+City
+Branch
+Counter
+
+---
+
+# 40. HEAD OFFICE DASHBOARD
+
+Focus on:
+
+company-wide operations
+branches
+revenue
+trips
+bookings
+occupancy
+fleet
+staff
+agents
+
+---
+
+# 41. REGIONAL MANAGER DASHBOARD
+
+Focus on assigned region.
+
+Show:
+
+branches
+tickets
+revenue
+active buses
+departures
+occupancy
+branch ranking
+issues
+
+---
+
+# 42. BRANCH MANAGER DASHBOARD
+
+Show:
+
+Today's sales
+Today's revenue
+Today's bookings
+Upcoming departures
+Available seats
+Sold seats
+Cancelled tickets
+Counter performance
+Cash drawer
+
+Useful panels:
+
+Next departure
+Today's passenger manifest
+Recent bookings
+Branch alerts
+
+---
+
+# 43. COUNTER STAFF DASHBOARD
+
+Prioritize speed.
+
+Main actions:
+
+Sell Ticket
+Search Booking
+Reprint Ticket
+Cancel Ticket
+Today's Sales
+Open Trips
+
+Display today's:
+
+cash collected
+tickets sold
+remaining seat inventory
+
+This screen must be fast and simple.
+
+---
+
+# 44. AGENT DASHBOARD
+
+Show:
+
+Wallet/Credit
+Today's Bookings
+Monthly Bookings
+Commission
+Pending Bookings
+Upcoming Trips
+
+Quick actions:
+
+Book Ticket
+Search Trip
+My Bookings
+Commission Statement
+
+---
+
+# 45. DRIVER DASHBOARD
+
+Based on the existing BiteN Go driver-console concept.
+
+Show:
+
+Assigned Bus
+Today's Trip
+Next Departure
+Route
+Stops
+Passenger Count
+Trip Status
+Vehicle Condition
+
+Actions:
+
+Start Boarding
+Depart
+Arrive
+Report Problem
+View Passenger List
+
+---
+
+# 46. CONDUCTOR DASHBOARD
+
+Show:
+
+Today's trip
+bus
+route
+seat map
+passenger list
+
+Actions:
+
+Check Ticket
+Board Passenger
+Mark No-show
+View Passenger
+
+Use a large mobile-friendly interface.
+
+---
+
+# 47. CUSTOMER DASHBOARD
+
+Show:
+
+Upcoming Trips
+My Tickets
+Past Trips
+Cancelled Trips
+
+Quick actions:
+
+Book Ticket
+Search Trips
+My Tickets
+Profile
+
+---
+
+# 48. PUBLIC CUSTOMER WEBSITE
+
+The customer-facing website must be separate conceptually from the back office.
+
+Home page:
+
+Company branding
+
+Search box:
+
+From
+To
+Date
+Passengers
+
+Search button.
+
+Optional:
+
+Return trip
+
+---
+
+# 49. TRIP SEARCH WORKFLOW
+
+Customer enters:
+
+From: Yangon
+To: Mandalay
+Date: 2026-09-10
+Passengers: 2
+
+System returns:
+
+Bus
+Departure
+Arrival
+Duration
+Price
+Available seats
+Boarding points
+Dropping points
+
+Example:
+
+Royal Express
+06:30
+13:30
+7h
+20,000 MMK
+32 seats available
+
+---
+
+# 50. SEAT SELECTION
+
+After selecting a trip:
+
+Display a visual seat map.
+
+Use database-driven seats.
+
+States:
+
+available
+selected
+held
+booked
+blocked
+
+The seat map must be responsive.
+
+Desktop:
+
+large seat diagram.
+
+Mobile:
+
+scrollable/comfortable seat selector.
+
+---
+
+# 51. PASSENGER INFORMATION
+
+Collect:
+
+Full name
+Phone
+Seat
+Boarding point
+Dropping point
+
+For multiple passengers:
+
+Passenger 1
+Passenger 2
+Passenger 3
+
+---
+
+# 52. BOOKING PAYMENT WORKFLOW
+
+Flow:
+
+Search Trip
+→ Select Trip
+→ Select Seats
+→ Enter Passenger Details
+→ Review
+→ Payment
+→ Booking Confirmation
+→ Ticket
+
+Do not mark a seat permanently booked before successful completion according to the configured booking/payment rules.
+
+Temporary seat hold must expire.
+
+---
+
+# 53. COUNTER BOOKING WORKFLOW
+
+Counter staff:
+
+Login
+→ Search Route
+→ Select Date
+→ Select Trip
+→ Select Passenger
+→ Select Seat
+→ Enter Passenger
+→ Select Payment
+→ Confirm
+→ Print Ticket
+
+The interface should minimize unnecessary clicks.
+
+---
+
+# 54. AGENT BOOKING WORKFLOW
+
+Agent:
+
+Login
+→ Search Trip
+→ Select Seat
+→ Passenger Data
+→ Confirm
+→ Payment/Credit
+→ Ticket
+→ Commission
+
+The booking must be recorded as:
+
+booking_source = agent
+
+and linked to the correct agent.
+
+---
+
+# 55. BRANCH MANAGER WORKFLOW
+
+Branch manager can:
+
+Login
+→ Branch Dashboard
+→ Monitor today's trips
+→ Monitor counters
+→ Monitor cash
+→ View bookings
+→ View passenger lists
+→ View branch sales
+→ Review operational issues
+
+---
+
+# 56. TRIP OPERATION WORKFLOW
+
+Before departure:
+
+Trip = scheduled
+
+Then:
+
+boarding
+
+Then:
+
+departed
+
+Then:
+
+in_transit
+
+Then:
+
+arrived
+
+Then:
+
+completed
+
+If problem:
+
+delayed
+
+or
+
+cancelled
+
+Every state transition must be recorded.
+
+---
+
+# 57. DRIVER WORKFLOW
+
+Driver:
+
+Login
+→ View today's assignment
+→ View bus
+→ View route
+→ View passenger count
+→ Start boarding
+→ Depart
+→ Update status
+→ Arrive
+→ Complete trip
+
+Driver should not need access to complex admin forms.
+
+---
+
+# 58. CONDUCTOR WORKFLOW
+
+Conductor:
+
+Login
+→ Select assigned trip
+→ Passenger Manifest
+→ Scan/enter ticket
+→ Verify passenger
+→ Mark boarded
+
+If passenger doesn't board:
+
+Mark no-show.
+
+---
+
+# 59. CANCELLATION WORKFLOW
+
+Customer/counter/agent requests cancellation.
+
+System checks:
+
+ticket status
+trip status
+cancellation policy
+time remaining
+permission
+
+Then:
+
+allowed
+→ cancellation
+→ refund calculation
+→ refund record
+→ seat becomes available according to policy
+
+Do not silently delete booking records.
+
+---
+
+# 60. TRIP CANCELLATION
+
+When a company cancels a trip:
+
+Trip = cancelled
+
+Then:
+
+* notify customers
+* notify branch
+* notify driver/conductor
+* block new bookings
+* calculate refund/credit rules
+* create audit records
+
+---
+
+# 61. BRANCH MANAGEMENT PAGES
+
+Admin:
+
+/admin/branches
+
+Features:
+
+list
+search
+filter
+create
+edit
+activate
+deactivate
+map/location
+
+Branch detail:
+
+overview
+counters
+staff
+buses
+routes
+trips
+bookings
+revenue
+expenses
+
+---
+
+# 62. CITY/REGION MANAGEMENT PAGES
+
+Pages:
+
+/admin/regions
+/admin/cities
+
+Must support hierarchical organization.
+
+Region:
+
+name
+manager
+cities
+branches
+
+City:
+
+region
+branches
+routes
+
+---
+
+# 63. COUNTER MANAGEMENT PAGE
+
+/admin/counters
+
+Show:
+
+counter code
+branch
+assigned staff
+status
+today's sales
+today's cash
+
+Actions:
+
+create
+assign staff
+activate
+deactivate
+
+---
+
+# 64. USER MANAGEMENT PAGE
+
+/admin/users
+
+Table:
+
+Name
+Username
+Role
+Region
+City
+Branch
+Counter
+Status
+Last Login
+Actions
+
+Actions:
+
+Create
+Edit
+Deactivate
+Reset Password
+Change Role
+Assign Branch
+Assign Counter
+
+---
+
+# 65. BUS MANAGEMENT PAGE
+
+/admin/buses
+
+Show:
+
+Bus code
+Plate number
+Model
+Seats
+Current Branch
+Driver
+Status
+Maintenance status
+
+Actions:
+
+Add Bus
+Edit
+Assign Driver
+Assign Branch
+Configure Seats
+Maintenance
+Deactivate
+
+---
+
+# 66. ROUTE MANAGEMENT PAGE
+
+/admin/routes
+
+Show:
+
+Route Code
+Origin
+Destination
+Stops
+Distance
+Duration
+Status
+
+Actions:
+
+Create
+Edit
+Manage Stops
+Map
+Publish
+Deactivate
+
+---
+
+# 67. SCHEDULE MANAGEMENT PAGE
+
+/admin/schedules
+
+Show:
+
+route
+bus
+days
+departure
+arrival
+effective dates
+fare
+status
+
+Actions:
+
+Create
+Edit
+Duplicate
+Deactivate
+
+---
+
+# 68. TRIP MANAGEMENT PAGE
+
+/admin/trips
+
+Filters:
+
+date
+branch
+route
+bus
+driver
+status
+
+Actions:
+
+Create Trip
+Edit Trip
+Assign Driver
+Assign Conductor
+Change Bus
+Delay
+Cancel
+Passenger Manifest
+
+---
+
+# 69. BOOKING MANAGEMENT PAGE
+
+/admin/bookings
+
+Search:
+
+booking reference
+passenger
+phone
+trip
+date
+branch
+agent
+
+Actions:
+
+view
+print
+cancel
+refund
+reschedule
+
+---
+
+# 70. SEAT MAP MANAGEMENT
+
+Provide a reusable seat-layout editor.
+
+Admin can define:
+
+rows
+columns
+seat numbers
+aisle
+special seats
+blocked positions
+
+Example layout:
+
+A1 A2 | A3 A4
+B1 B2 | B3 B4
+
+The system must support different bus configurations.
+
+Do not assume every bus has the same seat layout.
+
+---
+
+# 71. AGENT MANAGEMENT PAGE
+
+/admin/agents
+
+Show:
+
+agent name
+code
+branch
+status
+bookings
+sales
+commission
+balance
+
+Detail page:
+
+profile
+bookings
+commission
+financial statement
+permissions
+
+---
+
+# 72. DRIVER MANAGEMENT
+
+/admin/drivers
+
+Show:
+
+driver
+license
+expiry
+assigned bus
+branch
+availability
+status
+
+Alerts:
+
+expired license
+license expiring soon
+unavailable driver
+
+---
+
+# 73. MAINTENANCE PAGE
+
+/admin/maintenance
+
+Show:
+
+bus
+issue
+priority
+reported by
+date
+status
+
+Actions:
+
+assign
+start work
+resolve
+view history
+
+---
+
+# 74. FINANCE PAGES
+
+/admin/finance
+
+Sections:
+
+Payments
+Refunds
+Cash Drawers
+Transactions
+Expenses
+Agent Settlement
+Branch Settlement
+
+All financial pages need filters.
+
+---
+
+# 75. REPORTS
+
+/admin/reports
+
+Reports:
+
+Daily Sales
+Monthly Sales
+Branch Sales
+Counter Sales
+Agent Sales
+Route Sales
+Trip Occupancy
+Bus Utilization
+Cancellation Report
+Refund Report
+Payment Report
+Commission Report
+Expense Report
+Profit Summary
+Passenger Report
+
+Support:
+
+screen view
+print
+CSV export
+PDF export where appropriate
+
+---
+
+# 76. AUDIT PAGE
+
+/admin/audit
+
+Show:
+
+date
+user
+action
+entity
+entity ID
+old value
+new value
+
+Search/filter by:
+
+user
+date
+action
+entity
+
+---
+
+# 77. PROFILE PAGE
+
+All authenticated users get:
+
+/profile
+
+Features:
+
+name
+phone
+email
+username
+password change
+language
+theme
+logout
+
+Do not allow users to self-change privileged organization assignments.
+
+---
+
+# 78. APPLICATION SHELL
+
+Preserve the useful BiteN Go shell concept.
+
+Desktop:
+
+top header
+left navigation rail
+main content
+
+Mobile:
+
+mobile drawer
+fixed bottom navigation for the most important items
+
+Use reusable:
+
+AppShell
+Navigation
+Header
+PageHeader
+Card
+StatTile
+Table
+Modal
+Drawer
+Form
+Field
+StatusBadge
+EmptyState
+Loading
+ErrorState
+ConfirmDialog
+
+---
+
+# 79. VISUAL DESIGN
+
+Use the existing BiteN Go/Nexus visual philosophy as the foundation.
+
+Characteristics:
+
+clean
+modern
+professional
+transportation-oriented
+high information clarity
+
+Use:
+
+* Inter/system sans-serif for interface text
+* monospace/tabular numerals for money, times and IDs
+* 8px spacing rhythm
+* layered surfaces
+* restrained borders
+* rounded cards
+* strong hierarchy
+* clear status badges
+
+Context colors:
+
+Primary/core:
+dark neutral
+
+Transportation:
+blue
+
+Successful/financial:
+emerald
+
+Warnings:
+amber
+
+Critical errors:
+red
+
+Do not overuse color.
+
+---
+
+# 80. DARK MODE
+
+Preserve the existing token-based dark mode architecture.
+
+Do not hard-code separate dark-mode component designs.
+
+Use design tokens so the entire UI changes consistently.
+
+---
+
+# 81. RESPONSIVE DESIGN
+
+Must work on:
+
+mobile
+tablet
+desktop
+
+Important operational screens:
+
+Customer booking
+Seat map
+Counter ticket selling
+Conductor boarding
+Driver trip screen
+
+must work extremely well on phones.
+
+Tables on mobile should become:
+
+cards
+horizontal scroll
+or responsive compact layouts
+
+Do not let desktop tables break the mobile UI.
+
+---
+
+# 82. SEARCH
+
+Global search should support the appropriate records.
+
+Admin global search may search:
+
+booking
+ticket
+passenger
+phone
+bus
+route
+trip
+branch
+user
+
+Respect permissions and organization scope.
+
+---
+
+# 83. FILTERS
+
+Use reusable filter controls.
+
+Examples:
+
+Date range
+Region
+City
+Branch
+Counter
+Route
+Bus
+Trip Status
+Payment Status
+Booking Source
+
+Do not duplicate different implementations for every page.
+
+---
+
+# 84. PAGINATION
+
+Large datasets must be paginated.
+
+Do not load thousands of bookings into the browser.
+
+Use backend pagination.
+
+Return:
+
+items
+page
+pageSize
+total
+totalPages
+
+---
+
+# 85. API ARCHITECTURE
+
+Keep the existing project principle:
+
+React frontend
+→ REST API
+→ Node/Express backend
+→ PostgreSQL
+
+Do not allow the browser to connect directly to PostgreSQL.
+
+All business rules must be enforced by backend services.
+
+---
+
+# 86. API ROUTE STRUCTURE
+
+Use a clear namespace.
+
+Examples:
+
+/auth/login
+/auth/logout
+/auth/me
+/auth/password
+
+/companies
+/regions
+/cities
+/branches
+/counters
+/users
+/roles
+/permissions
+
+/buses
+/buses/:id
+/buses/:id/seats
+
+/routes
+/routes/:id/stops
+/routes/:id/map
+
+/schedules
+/trips
+/trips/:id
+
+/bookings
+/bookings/:id
+/bookings/:id/cancel
+/bookings/:id/refund
+
+/tickets
+/tickets/:id
+
+/passengers
+
+/agents
+/drivers
+/conductors
+
+/payments
+/refunds
+/transactions
+/expenses
+/cash-drawers
+
+/maintenance
+
+/reports
+
+/audit
+
+---
+
+# 87. API AUTHORIZATION
+
+Every protected API route must check:
+
+1. authenticated user
+2. role
+3. permission
+4. organization scope
+
+Example:
+
+GET /branches/50
+
+must verify that the user is allowed to access branch 50.
+
+Do not trust:
+
+branchId
+userId
+agentId
+counterId
+
+sent by the frontend without validating ownership/scope.
+
+---
+
+# 88. DATABASE INTEGRITY
+
+Use:
+
+foreign keys
+unique constraints
+check constraints
+indexes
+transactions
+proper cascading rules
+
+Do not use destructive cascading blindly for financial/history records.
+
+Historical bookings, payments and transactions should generally remain.
+
+---
+
+# 89. MONEY HANDLING
+
+Follow the useful concept already present in BiteN Go:
+
+Do not use floating-point numbers for money.
+
+Prefer integer minor units where appropriate.
+
+Example:
+
+amount_minor = 2000000
+
+representing:
+
+20,000.00
+
+or use integer kyat when the business currency has no fractional requirement.
+
+Use one consistent representation throughout the system.
+
+Never calculate financial values in JavaScript floating point.
+
+---
+
+# 90. BOOKING CONCURRENCY
+
+This is critical.
+
+Two customers must not be able to successfully purchase the same seat.
+
+Seat booking must be protected by server-side transactional logic.
+
+Required behavior:
+
+Customer A chooses seat A1
+Customer B chooses seat A1
+
+Only one request succeeds.
+
+The other receives:
+
+"Seat A1 is no longer available."
+
+Never depend on the frontend for this protection.
+
+Use appropriate PostgreSQL transaction/locking/unique-constraint strategies.
+
+---
+
+# 91. TEMPORARY SEAT HOLDS
+
+Allow configurable seat hold time.
+
+Default example:
+
+10 minutes.
+
+trip_seats:
+
+held
+held_until
+
+When the hold expires:
+
+seat becomes available.
+
+Do not require a manual cleanup action from staff.
+
+---
+
+# 92. BUSINESS RULE ENGINE
+
+Keep business rules out of React components.
+
+Frontend:
+
+display
+input
+request
+
+Backend/service:
+
+validation
+authorization
+booking
+seat allocation
+fare calculation
+refund calculation
+commission calculation
+trip state changes
+
+---
+
+# 93. ERROR HANDLING
+
+Use consistent API responses.
+
+Success:
+
+{
+"success": true,
+"data": ...
+}
+
+Error:
+
+{
+"success": false,
+"error": {
+"code": "...",
+"message": "..."
+}
+}
+
+Frontend must show readable messages.
+
+Do not expose database errors directly to customers.
+
+---
+
+# 94. LOADING / EMPTY / ERROR STATES
+
+Every data-driven screen must handle:
+
+loading
+empty
+error
+success
+
+Use reusable components.
+
+Do not leave blank screens while APIs load.
+
+---
+
+# 95. LOGIN
+
+Login screen inspired by existing BiteN Go login pattern.
+
+Login with:
+
+username/email/phone as configured
+password
+
+After login:
+
+redirect according to role.
+
+Example:
+
+super_admin → /admin
+branch_manager → /branch
+counter_staff → /counter
+agent → /agent
+driver → /driver
+conductor → /conductor
+customer → /customer
+
+---
+
+# 96. ROUTE GUARDS
+
+Preserve the existing role-gate idea.
+
+A user who manually enters:
+
+/admin
+
+without permission must be redirected.
+
+But frontend route guards are only for UX.
+
+Backend authorization remains mandatory.
+
+---
+
+# 97. NOTIFICATIONS
+
+Show:
+
+notification bell
+
+Unread count
+
+Notification panel.
+
+Notifications must be persisted in database.
+
+---
+
+# 98. PRINTING
+
+Provide print-friendly layouts for:
+
+ticket
+receipt
+passenger manifest
+daily sales report
+cash drawer report
+
+Do not print the entire dashboard.
+
+Create dedicated print styles/components.
+
+---
+
+# 99. QR CODE
+
+Every ticket should contain a QR code.
+
+QR should encode a safe ticket reference.
+
+Do not encode confidential personal information unnecessarily.
+
+Conductor can scan and verify the ticket using the backend.
+
+---
+
+# 100. CUSTOMER TICKET
+
+Ticket should resemble a real transportation ticket.
+
+Include:
+
+Company logo
+Company name
+Ticket number
+Booking reference
+Passenger name
+Phone
+Route
+Origin
+Destination
+Departure date
+Departure time
+Bus
+Seat
+Boarding point
+Dropping point
+Fare
+Payment status
+QR code
+Terms
+
+---
+
+# 101. ADMIN NAVIGATION
+
+Recommended:
+
+Dashboard
+
+Operations
+
+* Trips
+* Routes
+* Schedules
+* Buses
+* Maintenance
+
+Bookings
+
+* All Bookings
+* Tickets
+* Refunds
+
+Organization
+
+* Regions
+* Cities
+* Branches/Gates
+* Counters
+
+People
+
+* Users
+* Drivers
+* Conductors
+* Agents
+
+Finance
+
+* Payments
+* Cash Drawers
+* Transactions
+* Expenses
+* Commissions
+
+Reports
+
+* Sales
+* Occupancy
+* Branches
+* Routes
+* Agents
+* Finance
+
+System
+
+* Roles & Permissions
+* Audit Logs
+* Settings
+
+---
+
+# 102. BRANCH MANAGER NAVIGATION
+
+Dashboard
+
+Operations
+
+* Today's Trips
+* Passenger Lists
+* Buses
+
+Bookings
+
+* Bookings
+* Tickets
+
+Counters
+
+* Counters
+* Staff
+
+Finance
+
+* Cash Drawer
+* Daily Sales
+
+Reports
+
+Profile
+
+---
+
+# 103. COUNTER NAVIGATION
+
+Dashboard
+
+Sell Ticket
+
+Bookings
+
+Trips
+
+Tickets
+
+Cash Drawer
+
+Profile
+
+Keep this portal minimal and fast.
+
+---
+
+# 104. AGENT NAVIGATION
+
+Dashboard
+
+Book Ticket
+
+My Bookings
+
+Trips
+
+Customers
+
+Commission
+
+Statement
+
+Profile
+
+---
+
+# 105. DRIVER NAVIGATION
+
+Dashboard
+
+My Trips
+
+My Bus
+
+Passenger List
+
+Route
+
+Vehicle Issue
+
+Profile
+
+---
+
+# 106. CONDUCTOR NAVIGATION
+
+Dashboard
+
+Today's Trip
+
+Passenger List
+
+Seat Map
+
+Ticket Check
+
+Trip History
+
+Profile
+
+---
+
+# 107. CUSTOMER NAVIGATION
+
+Home/Search
+
+My Trips
+
+My Tickets
+
+Bookings
+
+Profile
+
+---
+
+# 108. BRANCH TERMINOLOGY
+
+The UI should be configurable because businesses may use:
+
+Bus Gate
+Branch
+Terminal
+Station
+Counter
+
+Internally use:
+
+branch
+
+but allow display label customization.
+
+---
+
+# 109. DATA RELATIONSHIP OVERVIEW
+
+Core organization:
+
+Company
+→ Region
+→ City
+→ Branch
+→ Counter
+
+People:
+
+Company
+→ Users
+→ Roles
+→ Permissions
+
+Fleet:
+
+Company
+→ Bus
+→ Seat Layout
+→ Seats
+
+Transport:
+
+Route
+→ Stops
+
+Schedule:
+
+Route
+→ Schedule
+→ Trip
+
+Trip:
+
+Trip
+→ Bus
+→ Driver
+→ Conductor
+→ Trip Seats
+
+Booking:
+
+Customer
+→ Booking
+→ Booking Passengers
+→ Seat
+→ Ticket
+→ Payment
+
+Agent:
+
+Agent
+→ Booking
+→ Commission
+
+Finance:
+
+Payment
+→ Transaction
+→ Refund
+
+Maintenance:
+
+Bus
+→ Maintenance
+
+---
+
+# 110. IMPORTANT DOMAIN RULE
+
+Never confuse:
+
+BUS
+TRIP
+ROUTE
+SCHEDULE
+SEAT
+BOOKING
+TICKET
+
+They are different entities.
+
+Example:
+
+One bus can operate many trips.
+
+One route can have many schedules.
+
+One schedule generates many trips.
+
+One trip has many seats.
+
+One customer can have many bookings.
+
+One booking can have many passengers.
+
+One passenger gets one seat for that trip.
+
+One booking may produce one or more tickets depending on the business model.
+
+---
+
+# 111. EXISTING BITE N GO IDEAS TO PRESERVE
+
+Preserve the strongest implementation ideas from the existing project:
+
+1. Shared PostgreSQL backend
+2. REST API
+3. Protected role-based routes
+4. Reusable AppShell
+5. Role-specific navigation
+6. Responsive mobile navigation
+7. Reusable UI components
+8. Central authentication
+9. Transaction/history model
+10. Transport map
+11. Route stops
+12. Bus/vehicle management
+13. Maintenance reporting
+14. Seat-related workflow
+15. Dashboard statistic cards
+16. Clear status colors
+17. Dark/light theme
+18. API loading/error states
+19. Centralized formatting functions
+20. Centralized internationalization support
+
+Remove the old domain concepts that no longer belong:
+
+* canteen
+* food items
+* meal orders
+* kitchen display
+* ferry monthly seats
+* student-specific transport model
+
+Replace them with actual commercial bus-ticketing concepts.
+
+---
+
+# 112. INTERNATIONALIZATION
+
+Preserve the existing centralized i18n concept.
+
+At minimum support:
+
+English
+Myanmar
+
+Do not scatter hard-coded translated text across business logic.
+
+Use translation keys.
+
+---
+
+# 113. TIMEZONE
+
+Use a company-configurable timezone.
+
+Default:
+
+Asia/Yangon
+
+Store timestamps appropriately.
+
+Display dates/times in the user's/company's configured timezone.
+
+---
+
+# 114. CURRENCY
+
+Default:
+
+MMK
+
+But do not hard-code currency throughout the database.
+
+Company settings should determine currency.
+
+---
+
+# 115. SECURITY
+
+Required:
+
+password hashing
+JWT or secure session handling
+secure cookies where applicable
+authorization middleware
+input validation
+rate limiting for authentication
+audit logging
+safe error messages
+CSRF protection where applicable
+security headers
+parameterized SQL/ORM queries
+
+Never:
+
+store plaintext passwords
+trust frontend permissions
+expose database credentials
+expose internal stack traces
+
+---
+
+# 116. VALIDATION
+
+Use schema validation for APIs.
+
+Validate:
+
+IDs
+dates
+times
+prices
+seat counts
+booking states
+organization assignments
+status transitions
+
+Return readable errors.
+
+---
+
+# 117. STATUS TRANSITION VALIDATION
+
+Prevent illegal state changes.
+
+Example:
+
+completed
+→ scheduled
+
+must not be allowed.
+
+cancelled
+→ departed
+
+must not be allowed.
+
+Only valid transitions are accepted.
+
+---
+
+# 118. AUDITING IMPORTANT ACTIONS
+
+Audit these at minimum:
+
+booking created
+booking confirmed
+booking cancelled
+refund created
+trip cancelled
+trip delayed
+seat changed
+fare changed
+bus reassigned
+driver reassigned
+user role changed
+branch changed
+agent commission changed
+financial adjustment
+
+---
+
+# 119. PERFORMANCE
+
+Design for:
+
+hundreds of branches
+thousands of users
+thousands of buses
+millions of bookings over time
+
+Use database indexes on:
+
+booking_reference
+trip_date
+route_id
+branch_id
+customer_user_id
+agent_id
+bus_id
+status
+created_at
+
+Use pagination.
+
+Avoid N+1 API/database queries.
+
+---
+
+# 120. ARCHITECTURE
+
+Recommended structure:
+
+frontend/
+src/
+components/
+pages/
+admin/
+branch/
+counter/
+agent/
+driver/
+conductor/
+customer/
+hooks/
+lib/
+types/
+
+backend/
+src/
+routes/
+services/
+repositories/
+middleware/
+auth/
+validation/
+reports/
+notifications/
+
+database/
+schema.sql
+reset.sql
+seed.sql
+
+Keep frontend and backend logically separate.
+
+---
+
+# 121. REUSABLE FRONTEND COMPONENTS
+
+Build/retain components such as:
+
+AppShell
+PageHeader
+StatTile
+DataTable
+SearchField
+FilterBar
+FormField
+Select
+DatePicker
+Modal
+Drawer
+ConfirmDialog
+StatusBadge
+EmptyState
+ErrorNote
+Spinner
+Pagination
+SeatMap
+RouteMap
+BookingSummary
+TicketPreview
+
+---
+
+# 122. CUSTOMER SEARCH COMPONENTS
+
+Reusable:
+
+LocationSelector
+DateSelector
+PassengerSelector
+TripCard
+SeatMap
+PassengerForm
+BookingSummary
+PaymentSelector
+
+---
+
+# 123. ADMIN COMPONENTS
+
+Reusable:
+
+BranchSelector
+OrganizationBreadcrumb
+TripStatusBadge
+OccupancyBadge
+RevenueCard
+BookingTable
+PassengerTable
+BusStatusBadge
+MaintenanceTable
+
+---
+
+# 124. ORGANIZATION FILTER
+
+A powerful reusable component:
+
+OrganizationScopeSelector
+
+Options:
+
+All Company
+Region
+City
+Branch
+Counter
+
+The component should drive dashboard/report queries.
+
+---
+
+# 125. URL / ROUTING CONVENTION
+
+Use clear routes.
+
+Examples:
+
+/login
+
+/customer
+/customer/search
+/customer/bookings
+/customer/tickets
+
+/admin
+/admin/branches
+/admin/cities
+/admin/regions
+/admin/buses
+/admin/routes
+/admin/schedules
+/admin/trips
+/admin/bookings
+/admin/agents
+/admin/drivers
+/admin/conductors
+/admin/finance
+/admin/reports
+/admin/audit
+
+/branch
+/branch/bookings
+/branch/trips
+/branch/counters
+/branch/staff
+/branch/cash
+
+/counter
+/counter/sell
+/counter/bookings
+/counter/tickets
+/counter/cash
+
+/agent
+/agent/book
+/agent/bookings
+/agent/commission
+
+/driver
+/driver/trips
+/driver/bus
+/driver/manifest
+/driver/route
+
+/conductor
+/conductor/trip
+/conductor/check-in
+
+---
+
+# 126. ADMIN DASHBOARD INTERACTION
+
+Cards are not decorative only.
+
+Clicking:
+
+Today's Revenue
+→ opens filtered revenue report.
+
+Tickets Sold
+→ opens today's bookings.
+
+Active Buses
+→ opens bus list.
+
+Branches
+→ opens branch list.
+
+Upcoming Trips
+→ opens trip board.
+
+Delayed Trips
+→ opens delayed trips.
+
+---
+
+# 127. TRIP BOARD
+
+Create a visual trip board.
+
+Columns:
+
+Time
+Route
+Bus
+Driver
+Departure Gate
+Passengers
+Occupancy
+Status
+
+Example:
+
+06:30
+Yangon → Mandalay
+Bus B-102
+Driver Aung
+Gate 2
+37/45
+82%
+Boarding
+
+Useful for:
+
+head office
+branch manager
+counter staff
+
+---
+
+# 128. BRANCH BOARD
+
+Show:
+
+Upcoming departures
+Currently boarding
+Departed
+Delayed
+Cancelled
+
+This should be a highly practical operations screen.
+
+---
+
+# 129. PASSENGER MANIFEST
+
+Trip manifest must contain:
+
+seat
+passenger
+phone
+boarding stop
+dropping stop
+ticket status
+boarding status
+
+Printable.
+
+---
+
+# 130. REPORT FILTER ARCHITECTURE
+
+All reports should share:
+
+Date range
+Organization scope
+Route
+Bus
+Status
+
+Do not build completely different filters on every report.
+
+---
+
+# 131. NOTIFICATION TRIGGERS
+
+At minimum:
+
+booking confirmed
+payment successful
+booking cancelled
+refund completed
+trip delayed
+trip cancelled
+departure reminder
+maintenance alert
+
+---
+
+# 132. SEED DATA
+
+Create realistic development data.
+
+Example:
+
+Company:
+BiteN Go Bus Transportation
+
+Regions:
+
+Yangon Region
+Mandalay Region
+Shan Region
+
+Cities:
+
+Yangon
+Bago
+Naypyidaw
+Taunggyi
+Mandalay
+
+Branches:
+
+Yangon Central Gate
+Bago Gate
+Naypyidaw Gate
+Mandalay Gate
+Taunggyi Gate
+
+Sample:
+
+buses
+drivers
+conductors
+routes
+stops
+schedules
+trips
+agents
+customers
+bookings
+
+Seed data should make every major dashboard useful immediately after setup.
+
+---
+
+# 133. STARTER ACCOUNTS
+
+Create development-only starter accounts for each major role.
+
+Example usernames:
+
+admin
+regional01
+branch01
+counter01
+agent01
+driver01
+conductor01
+customer01
+
+Never present default development passwords as production security guidance.
+
+Make seed credentials configurable.
+
+---
+
+# 134. DATABASE SEEDING
+
+The database seed should:
+
+1. create company
+2. create regions
+3. create cities
+4. create branches
+5. create counters
+6. create roles
+7. create permissions
+8. create users
+9. create buses
+10. create seat layouts
+11. create routes
+12. create stops
+13. create schedules
+14. create trips
+15. create agents
+16. create sample customers
+17. create sample bookings
+18. create sample payments
+
+---
+
+# 135. TESTING REQUIREMENTS
+
+Test at multiple levels.
+
+## Unit tests
+
+Test:
+
+fare calculation
+commission calculation
+refund rules
+seat availability
+trip state transitions
+permission checks
+
+## Integration tests
+
+Test:
+
+login
+booking
+seat locking
+payment
+cancellation
+refund
+branch scope
+
+## Authorization tests
+
+Verify:
+
+counter staff cannot access admin
+agent cannot access another agent
+branch manager cannot access another branch
+regional manager cannot access another region
+customer cannot view another customer's booking
+
+---
+
+# 136. CRITICAL SECURITY TEST
+
+Never trust a request such as:
+
+POST /bookings
+
+with:
+
+branchId = another branch
+
+The backend must derive/validate ownership from authenticated user context.
+
+---
+
+# 137. CRITICAL BOOKING TEST
+
+Run two simultaneous requests for the same trip seat.
+
+Expected:
+
+one success
+one conflict
+
+There must never be two confirmed bookings for the same trip + seat.
+
+---
+
+# 138. DEPLOYMENT
+
+The project should remain self-hostable.
+
+Recommended:
+
+PostgreSQL
+Node.js
+React/Vite
+Nginx or equivalent reverse proxy
+
+Production configuration must use environment variables.
+
+Never commit:
+
+database password
+JWT secret
+production credentials
+
+---
+
+# 139. DEVELOPMENT COMMANDS
+
+Keep simple commands.
+
+Example:
+
+Database:
+run schema
+
+Backend:
+npm install
+npm run dev
+
+Frontend:
+npm install
+npm run dev
+
+Production:
+
+npm run build
+
+Provide a README explaining:
+
+database setup
+environment variables
+seed
+development
+production
+backup
+restore
+
+---
+
+# 140. BACKUP
+
+Document PostgreSQL backup/restore.
+
+Example:
+
+pg_dump
+pg_restore
+
+Never rely on application-level exports as the only database backup.
+
+---
+
+# 141. LOGGING
+
+Backend should log:
+
+startup
+database connection
+authentication failures
+important business errors
+job failures
+
+Do not log passwords, tokens or sensitive payment details.
+
+---
+
+# 142. API HEALTH
+
+Provide:
+
+GET /health
+
+Return:
+
+server status
+database status
+version
+environment
+
+Do not expose secrets.
+
+---
+
+# 143. VERSION INFORMATION
+
+Display application version in:
+
+Admin → System Settings
+
+and optionally footer/about.
+
+---
+
+# 144. CONFIGURATION
+
+Create centralized configuration for:
+
+company name
+currency
+timezone
+seat hold duration
+cancellation policy
+commission settings
+ticket prefix
+booking prefix
+notification settings
+
+---
+
+# 145. BUSINESS SETTINGS
+
+Admin should eventually be able to configure:
+
+minimum booking lead time
+maximum booking passengers
+seat hold duration
+cancellation window
+refund percentage
+agent commission
+default currency
+
+---
+
+# 146. DESIGN RULE FOR FUTURE DEVELOPMENT
+
+When adding a new feature:
+
+1. Understand existing architecture.
+2. Reuse existing components.
+3. Reuse existing API patterns.
+4. Reuse existing design tokens.
+5. Reuse existing auth/role patterns.
+6. Add the smallest necessary change.
+7. Do not duplicate logic.
+8. Do not silently redesign unrelated pages.
+9. Do not rename major existing entities unless required.
+10. Keep backward compatibility where practical.
+
+---
+
+# 147. AI CODING RULE
+
+Before changing code:
+
+Inspect the relevant files.
+
+Determine:
+
+* current architecture
+* existing components
+* current API pattern
+* current database pattern
+* current types
+* current route guard
+* current styling system
+
+Then implement.
+
+Do not guess.
+
+Do not create a second authentication system.
+
+Do not create a second API client.
+
+Do not create duplicate UI component systems.
+
+Do not create duplicate database entities representing the same concept.
+
+---
+
+# 148. FEATURE IMPLEMENTATION ORDER
+
+Implement in this order.
+
+PHASE 1
+Foundation
+
+* authentication
+* company
+* regions
+* cities
+* branches
+* counters
+* users
+* roles
+* permissions
+
+PHASE 2
+Fleet
+
+* buses
+* seats
+* drivers
+* conductors
+* maintenance
+
+PHASE 3
+Transport
+
+* routes
+* stops
+* maps
+* schedules
+* trips
+
+PHASE 4
+Booking
+
+* customers
+* passengers
+* trip seats
+* bookings
+* tickets
+* payments
+
+PHASE 5
+Agents
+
+* agent accounts
+* commission
+* statements
+
+PHASE 6
+Finance
+
+* cash drawers
+* transactions
+* refunds
+* expenses
+
+PHASE 7
+Operations
+
+* boarding
+* trip status
+* passenger manifests
+* notifications
+
+PHASE 8
+Reports
+
+* sales
+* occupancy
+* branch performance
+* route performance
+* finance
+
+PHASE 9
+Polish
+
+* print
+* exports
+* dark mode
+* Myanmar language
+* mobile optimization
+* performance
+
+---
+
+# 149. MVP
+
+The first usable MVP must include:
+
+Authentication
+
+Roles:
+admin
+branch_manager
+counter_staff
+agent
+driver
+conductor
+customer
+
+Organization:
+
+company
+branch
+counter
+
+Fleet:
+
+bus
+seat layout
+
+Transport:
+
+route
+stops
+schedule
+trip
+
+Booking:
+
+trip search
+seat selection
+passenger
+booking
+ticket
+payment
+
+Operations:
+
+driver trip
+conductor boarding
+
+Admin:
+
+dashboard
+branches
+buses
+routes
+trips
+bookings
+users
+
+---
+
+# 150. DEFINITION OF DONE
+
+A feature is not complete merely because a page exists.
+
+A feature is complete when:
+
+* frontend exists
+* backend endpoint exists
+* database model exists
+* validation exists
+* authorization exists
+* organization scope works
+* loading state works
+* empty state works
+* error state works
+* mobile layout works
+* audit behavior exists where appropriate
+* tests exist for critical business rules
+
+---
+
+# 151. FINAL SYSTEM GOAL
+
+The finished system should feel like a professional transportation company's central operating platform.
+
+The owner should be able to sit at head office and understand:
+
+What buses are running?
+Which branches are active?
+Which trips are departing?
+How many seats are sold?
+How much money was collected?
+Which routes are popular?
+Which branch is selling the most?
+Which agents are performing?
+Which buses require maintenance?
+Which trips are delayed?
+Which customers are travelling?
+Which tickets are cancelled?
+Which refunds are pending?
+
+At the same time:
+
+A counter staff member should only need a few clicks to sell a ticket.
+
+An agent should easily book a passenger.
+
+A driver should immediately know today's trip.
+
+A conductor should quickly verify passengers.
+
+A customer should easily search, choose a seat, pay and receive a ticket.
+
+The entire organization must operate from the same centralized source of truth.
+
+# END OF MASTER PROJECT SPECIFICATION
+
+IMPORTANT:
+
+Before implementing features, inspect the existing BiteN Go codebase and preserve useful architecture and UI patterns.
+
+Do not copy the old canteen/ferry business model.
+
+Transform the existing platform into the multi-branch commercial bus transportation system described above.
+
+Implement incrementally.
+
+After every major phase:
+
+* run type checking
+* run tests
+* verify database migrations/schema
+* verify authorization
+* verify API
+* verify responsive UI
+
+Do not break already-working functionality without a migration/refactor plan.
