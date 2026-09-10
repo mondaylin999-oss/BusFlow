@@ -1,6 +1,6 @@
-# BiteN Go Bus — User Guide
+# BusFlow — User Guide
 
-Use BiteN Go Bus to reserve seats, manage tickets, record received payments, and coordinate departures. The menus and records you can access depend on your role and assigned branch.
+Use BusFlow to reserve seats, manage tickets, record received payments, and coordinate departures. The menus and records you can access depend on your role and assigned branch.
 
 **For installation, development, configuration, testing, and deployment, see [README1.md — Developer Guide](README1.md).** This guide covers using an application that has already been set up.
 

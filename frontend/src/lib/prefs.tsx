@@ -36,8 +36,8 @@ type Prefs = {
 
 const PrefsContext = createContext<Prefs | null>(null);
 
-const LANGUAGE_KEY = "biten_go_language";
-const THEME_KEY = "biten_go_theme";
+const LANGUAGE_KEY = "busflow_language";
+const THEME_KEY = "busflow_theme";
 
 function readStored<T extends string>(
   key: string,

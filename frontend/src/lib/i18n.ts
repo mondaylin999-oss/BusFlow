@@ -27,7 +27,7 @@ export const LANGUAGE_NAMES: Record<Language, string> = {
 /** English → Myanmar. Anything not listed falls back to the English. */
 export const MYANMAR: Record<string, string> = {
   // --- the shell, roles, navigation ----------------------------------------
-  "BiteN Go": "BiteN Go",
+  "BusFlow": "BusFlow",
   Dashboard: "ပင်မစာမျက်နှာ",
   "Canteen Menu": "စားသောက်ဆိုင် မီနူး",
   "Meal Orders": "မှာယူထားသော အစားအစာများ",

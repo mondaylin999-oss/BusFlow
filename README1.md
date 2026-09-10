@@ -1,4 +1,4 @@
-# BiteN Go Bus — Developer Guide
+# BusFlow — Developer Guide
 
 A self-hosted multi-branch bus booking application adapted from the supplied BiteN Go v6.1 reference. React 19 + Vite + TypeScript frontend, Express + TypeScript API, and central PostgreSQL database. **This is the agreed MVP, not completion of all 151 sections of the source specification.**
 
@@ -8,11 +8,11 @@ For passenger and staff operating instructions, see [README.md](README.md). This
 
 Requirements: Node.js 22.12+ (24 LTS recommended), npm, and PostgreSQL 16+ with a database you can create. No C++ compiler is required. The ZIP contains source and lockfiles; install dependencies before running.
 
-1. Extract the ZIP into a folder such as `C:\Projects\BiteN_Go_Bus_v1`.
+1. Extract the ZIP into a folder such as `C:\Projects\BusFlow`.
 2. Create a **new** PostgreSQL database. Do not run this schema against your old BiteN Go database:
 
    ```sh
-   createdb -U postgres biten_go_bus
+   createdb -U postgres busflow
    ```
 
 3. Copy `backend/.env.example` to `backend/.env`. Set:
@@ -149,9 +149,9 @@ JWTs last eight hours. Logout removes the browser token; server-side revocation,
 Run with PostgreSQL tools, supplying passwords through a protected `.pgpass` or interactive prompt:
 
 ```sh
-pg_dump -h localhost -U postgres -Fc -f bus-backup.dump biten_go_bus
-createdb -U postgres biten_go_bus_restore
-pg_restore -h localhost -U postgres --no-owner -d biten_go_bus_restore bus-backup.dump
+pg_dump -h localhost -U postgres -Fc -f bus-backup.dump busflow
+createdb -U postgres busflow_restore
+pg_restore -h localhost -U postgres --no-owner -d busflow_restore bus-backup.dump
 ```
 
 Test restores in a separate database. Keep backups protected and outside the app folder. An application table export does not replace a database backup.

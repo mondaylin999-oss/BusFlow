@@ -16,7 +16,7 @@ export const ENV = {
   cancelHours: Number(process.env.CANCEL_HOURS || 2),
   refundPercent: Number(process.env.REFUND_PERCENT || 90),
   commissionPercent: Number(process.env.COMMISSION_PERCENT || 5),
-  companyName: process.env.COMPANY_NAME || "BiteN Go Bus",
+  companyName: process.env.COMPANY_NAME || "BusFlow",
   version: "1.0.0-mvp",
 };
 if (ENV.jwtSecret.length < 32)

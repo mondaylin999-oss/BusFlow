@@ -1,5 +1,5 @@
 // ===========================================================================
-//  api.ts — the single place where the app talks to the BiteN Go backend.
+//  api.ts — the single place where the app talks to the BusFlow backend.
 //
 //  FINDING THE BACKEND
 //  -------------------
@@ -24,8 +24,8 @@
 //  breaks when the app and the API are on different addresses.
 // ===========================================================================
 
-const TOKEN_KEY = "biten_go_bus_token";
-const BASE_CACHE_KEY = "biten_go_bus_api_base";
+const TOKEN_KEY = "busflow_token";
+const BASE_CACHE_KEY = "busflow_api_base";
 
 function candidateBaseUrls(): string[] {
   const list: string[] = [];

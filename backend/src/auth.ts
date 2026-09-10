@@ -67,7 +67,7 @@ export async function createSessionToken(claims: SessionClaims) {
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.sub)
     .setIssuedAt()
-    .setIssuer("biten-go")
+    .setIssuer("busflow")
     .setExpirationTime(`${ENV.jwtExpireMinutes}m`)
     .sign(secretKey);
 }
@@ -77,7 +77,7 @@ export async function readSessionToken(
 ): Promise<SessionClaims | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey, {
-      issuer: "biten-go",
+      issuer: "busflow",
     });
     if (typeof payload.uid !== "number") return null;
     return {
