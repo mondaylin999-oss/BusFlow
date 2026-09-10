@@ -1,0 +1,30 @@
+# ===========================================================================
+#  BusFlow — Netlify deployment
+#
+#  Frontend: built by Vite, served as static files.
+#  API:      the Express app in backend/src, run as a single Netlify Function.
+#  Database: Neon (serverless PostgreSQL). Set DATABASE_URL in the Netlify UI.
+# ===========================================================================
+
+[build]
+  command = "npm --prefix backend ci && npm --prefix backend run build && npm --prefix frontend ci && npm --prefix frontend run build"
+  publish = "frontend/dist"
+  functions = "backend/netlify-functions"
+
+[functions]
+  node_bundler = "esbuild"
+  # pg ships optional native bits esbuild should not try to inline.
+  external_node_modules = ["pg", "pg-native"]
+
+# The API. Must come before the SPA fallback below.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# Single-page app: every other path serves index.html so client routing works.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

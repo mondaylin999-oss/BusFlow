@@ -22,9 +22,11 @@
     "express": "^4.21.2",
     "jose": "^6.1.0",
     "pg": "^8.16.3",
+    "serverless-http": "^4.0.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@netlify/functions": "^6.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "4.17.21",
     "@types/node": "^24.7.0",
