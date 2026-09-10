@@ -6,9 +6,15 @@ Use BusFlow to reserve seats, manage tickets, record received payments, and coor
 
 ## 1. Open the application
 
-Open the website address supplied by your administrator. For a local installation, the usual address is `http://localhost:5173`.
+**Hosted version:** open <https://busflowpilot.netlify.app>. Nothing to install — it works in any modern browser, on a computer or a phone.
 
-If your local Windows copy is already configured, start PostgreSQL, then open `start-backend.bat` and `start-frontend.bat`. Keep both terminal windows open while using the app. First-time installation instructions are in the Developer Guide.
+**Local copy:** the usual address is `http://localhost:5173`. If your Windows copy is already configured, run `start-all.bat` and keep the two terminal windows it opens running while you use the app. First-time installation instructions are in the Developer Guide.
+
+### The first page load can be slow
+
+The hosted version runs on Netlify, with its database on Neon. To keep costs down, the database powers down when nobody has used the application for a while.
+
+This means **the first sign-in after a quiet period may take several seconds**, and can occasionally time out. Wait a moment and try again — everything is normal afterwards, and the application stays quick while you keep using it. This affects only the hosted version, not a local copy.
 
 ## 2. Sign in
 
@@ -131,6 +137,7 @@ This action records a refund; it does not send money. Records should match the c
 | Problem | What to do |
 | --- | --- |
 | Cannot reach the server | Ask the administrator to check the services. For a local copy, confirm PostgreSQL and both application terminals are running. |
+| First load is very slow, or times out once | Normal on the hosted version after a quiet period while the database restarts. Wait a few seconds and try again. See section 1. |
 | Sign-in fails | Check your username and password; ask the administrator to check your account if necessary. |
 | Too many login attempts | Wait before retrying. Repeated failures temporarily block further attempts. |
 | No matching trips | Clear filters, check city spelling and date, or ask staff about available departures. |
@@ -141,7 +148,20 @@ This action records a refund; it does not send money. Records should match the c
 | Map fails to load | Check internet access. Trip information remains available without map tiles or road routing. |
 | Forgotten password | Contact the administrator. Self-service recovery is not included. |
 
-## 14. Current version
+## 14. Where the application runs
+
+The hosted version uses:
+
+| Part | Service |
+| --- | --- |
+| Website and application programming interface | Netlify |
+| Database | Neon (hosted PostgreSQL) |
+
+You do not need accounts with either service to use the application — your administrator manages them. Both matter to you in one way only: the delay described in section 1 when the database has been idle.
+
+A local copy uses PostgreSQL installed on the computer instead, and has no such delay.
+
+## 15. Current version
 
 This release is a working MVP for reservations, staff-recorded payments, tickets, selected branch administration, and basic trip operations. It does not include a live payment gateway, automatic refund transfers, camera scanning, full accounting, or every feature in the master specification.
 
