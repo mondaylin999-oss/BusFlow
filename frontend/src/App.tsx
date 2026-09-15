@@ -27,6 +27,12 @@ import "./bus.css";
 
 type Row = Record<string, any>;
 const money = (n: number) => new Intl.NumberFormat("en-US").format(n) + " MMK";
+const duration = (minutes: number) => {
+  if (!minutes) return "";
+  const h = Math.floor(minutes / 60),
+    m = minutes % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+};
 const date = (s: string) =>
   new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
@@ -558,12 +564,38 @@ function Overview() {
     </div>
   );
 }
+// Departure bands and sort orders, matching what public bus-booking sites
+// offer. Both are resolved server-side against a whitelist.
+const BANDS = [
+  { key: "", label: "Any time" },
+  { key: "morning", label: "Morning", hint: "5am - 12pm" },
+  { key: "afternoon", label: "Afternoon", hint: "12pm - 5pm" },
+  { key: "evening", label: "Evening", hint: "5pm - 9pm" },
+  { key: "night", label: "Night", hint: "9pm - 5am" },
+];
+const SORTS = [
+  { key: "departure", label: "Departure time" },
+  { key: "fare_low", label: "Price: low to high" },
+  { key: "fare_high", label: "Price: high to low" },
+  { key: "duration", label: "Shortest journey" },
+  { key: "seats", label: "Most seats free" },
+];
+
 function Trips() {
   const { user } = useAuth();
   const [query, setQuery] = useState(""),
     [page, setPage] = useState(1),
+    [band, setBand] = useState(""),
+    [sort, setSort] = useState("departure"),
     [selected, setSelected] = useState<Row | null>(null);
-  const result = useData<Row>("/trips?page=" + page + query);
+  const result = useData<Row>(
+    "/trips?page=" +
+      page +
+      query +
+      (band ? "&depart=" + band : "") +
+      "&sort=" +
+      sort,
+  );
   const canSell = user!.permissions.includes("bookings.create");
   return (
     <div className="stack">
@@ -601,6 +633,43 @@ function Trips() {
           <button className="primary">Search trips</button>
         </form>
       </Card>
+      <div className="refine">
+        <div className="bands" role="group" aria-label="Departure time">
+          {BANDS.map((b) => (
+            <button
+              key={b.key}
+              type="button"
+              className={"chip" + (band === b.key ? " on" : "")}
+              aria-pressed={band === b.key}
+              title={b.hint}
+              onClick={() => {
+                setPage(1);
+                setSelected(null);
+                setBand(b.key);
+              }}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+        <label className="sort">
+          <span className="muted small">Sort by</span>
+          <select
+            value={sort}
+            onChange={(e) => {
+              setPage(1);
+              setSelected(null);
+              setSort(e.target.value);
+            }}
+          >
+            {SORTS.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <State {...result}>
         {result.data?.items.length ? (
           result.data.items.map((t: Row) => (
@@ -615,13 +684,30 @@ function Trips() {
                 </h3>
                 <p>{date(t.departure_at)}</p>
                 <p className="muted small">
-                  {t.bus} · {t.gate} · Arrives {date(t.arrival_at)}
+                  {t.bus}
+                  {t.bus_model ? ` · ${t.bus_model}` : ""} · {t.gate}
+                  {t.duration_minutes
+                    ? ` · ${duration(t.duration_minutes)}`
+                    : ""}{" "}
+                  · Arrives {date(t.arrival_at)}
                 </p>
               </div>
               <div className="trip-price">
                 <strong>{money(t.fare)}</strong>
-                <span>
-                  {t.available} of {t.seats} seats available
+                <span
+                  className={
+                    t.available === 0
+                      ? "seats-none"
+                      : t.available <= 5
+                        ? "seats-low"
+                        : undefined
+                  }
+                >
+                  {t.available === 0
+                    ? "Sold out"
+                    : t.available <= 5
+                      ? `Only ${t.available} seats left`
+                      : `${t.available} of ${t.seats} seats available`}
                 </span>
                 <button onClick={() => setSelected(t)}>
                   {canSell ? "Choose seats" : "Open trip"}

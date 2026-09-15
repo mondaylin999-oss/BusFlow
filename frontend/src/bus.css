@@ -582,3 +582,45 @@ th {
     overflow: visible;
   }
 }
+
+/* --- Search refinement: departure bands and sort ------------------------- */
+.refine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.chip.on {
+  background: #1863c5;
+  border-color: #1863c5;
+  color: #fff;
+}
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sort select {
+  width: auto;
+  min-width: 170px;
+}
+.seats-low {
+  color: #d97706;
+  font-weight: 600;
+}
+.seats-none {
+  color: #dc2626;
+  font-weight: 600;
+}

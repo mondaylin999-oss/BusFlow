@@ -332,6 +332,31 @@ app.get(
         values.push(text.parse(req.query[key]));
         where += ` AND ${col}=$${values.length}`;
       }
+    // Departure-time bands, the filter every public bus search offers. Hours
+    // are Myanmar local time, and "night" deliberately wraps past midnight.
+    const bands: Record<string, string> = {
+      morning: "BETWEEN 5 AND 11",
+      afternoon: "BETWEEN 12 AND 16",
+      evening: "BETWEEN 17 AND 20",
+    };
+    const band = req.query.depart ? text.parse(req.query.depart) : "";
+    const hour =
+      "EXTRACT(hour FROM (t.departure_at AT TIME ZONE 'Asia/Yangon'))";
+    if (band === "night") where += ` AND (${hour} >= 21 OR ${hour} <= 4)`;
+    else if (bands[band]) where += ` AND ${hour} ${bands[band]}`;
+
+    // Whitelisted, so the value never reaches SQL as text.
+    const sorts: Record<string, string> = {
+      departure: "t.departure_at",
+      fare_low: "t.fare, t.departure_at",
+      fare_high: "t.fare DESC, t.departure_at",
+      duration: "rt.duration_minutes, t.departure_at",
+      seats: "available DESC, t.departure_at",
+    };
+    const order =
+      (req.query.sort ? sorts[text.parse(req.query.sort)] : null) ||
+      sorts.departure;
+
     const joins = `FROM trips t JOIN routes rt ON rt.id=t.route_id JOIN buses bu ON bu.id=t.bus_id ${orgJoin}`;
     const count = await pool.query(
       `SELECT count(*) ${joins} WHERE ${where}`,
@@ -339,7 +364,7 @@ app.get(
     );
     values.push(size, (page - 1) * size);
     const { rows } = await pool.query(
-      `SELECT t.*,rt.origin,rt.destination,bu.code bus,br.name gate,(SELECT count(*)::int FROM trip_seats ts WHERE ts.trip_id=t.id) seats,(SELECT count(*)::int FROM trip_seats ts WHERE ts.trip_id=t.id AND (ts.status='available' OR (ts.status='held' AND ts.held_until<=now()))) available ${joins} WHERE ${where} ORDER BY t.departure_at LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      `SELECT t.*,rt.origin,rt.destination,bu.code bus,bu.model bus_model,br.name gate,rt.duration_minutes,(SELECT count(*)::int FROM trip_seats ts WHERE ts.trip_id=t.id) seats,(SELECT count(*)::int FROM trip_seats ts WHERE ts.trip_id=t.id AND (ts.status='available' OR (ts.status='held' AND ts.held_until<=now()))) available ${joins} WHERE ${where} ORDER BY ${order} LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values,
     );
     res.json({

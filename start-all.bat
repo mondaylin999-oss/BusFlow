@@ -22,6 +22,10 @@ if not defined PGBIN (
 )
 
 set "PGDATA=%USERPROFILE%\.busflow-pg"
+REM Keep the server log OUT of the data directory. PostgreSQL walks that
+REM directory during crash recovery, and a log file held open inside it can
+REM stall startup with a sharing violation on Windows.
+set "PGLOG=%USERPROFILE%\.busflow-pg-logs"
 
 echo [1/3] Database...
 if not exist "%PGDATA%\PG_VERSION" (
@@ -32,9 +36,10 @@ if not exist "%PGDATA%\PG_VERSION" (
   >>"%PGDATA%\postgresql.conf" echo port = 5433
   >>"%PGDATA%\postgresql.conf" echo listen_addresses = '127.0.0.1'
 )
+if not exist "%PGLOG%" mkdir "%PGLOG%"
 "%PGBIN%\pg_ctl" -D "%PGDATA%" status >nul 2>&1
 if errorlevel 1 (
-  start "" /b "%PGBIN%\pg_ctl" -D "%PGDATA%" -l "%PGDATA%\server.log" start
+  start "" /b "%PGBIN%\pg_ctl" -D "%PGDATA%" -l "%PGLOG%\server.log" start
   timeout /t 3 /nobreak >nul
   echo     started on port 5433
 ) else (
