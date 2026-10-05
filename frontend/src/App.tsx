@@ -24,6 +24,8 @@ import { usePrefs } from "./lib/prefs";
 import { Card, PageHeader, StatTile } from "./components/ui";
 import { RouteMap } from "./components/RouteMap";
 import { PaymentNextStep } from "./components/PaymentNextStep";
+import { BookingProgress } from "./components/BookingProgress";
+import { BookingReview } from "./components/BookingReview";
 import { useLiveBooking } from "./lib/useLiveBooking";
 import { holdSeconds, type HeldBooking } from "./lib/bookingWatcher";
 import { reconcileSeats, toggleSeat, type PassengerDraft, type SeatAvailability } from "./lib/seatSelection";
@@ -610,6 +612,7 @@ function Trips() {
         title={canSell ? "Find your trip" : "Trip board"}
         subtitle="Search departures and open live seat availability."
       />
+      {canSell && !selected && <BookingProgress stage="trip" />}
       <Card>
         <form
           className="filters"
@@ -766,6 +769,7 @@ function TripPanel({
   const seats = useData<(Row & SeatAvailability)[]>("/trips/" + trip.id + "/seats"),
     stops = useData<Row[]>("/trips/" + trip.id + "/stops");
   const [passengers, setPassengers] = useState<PassengerDraft[]>([]),
+    [reviewing, setReviewing] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const chosen = passengers.flatMap(p => p.seatId === null ? [] : [p.seatId]);
@@ -777,9 +781,11 @@ function TripPanel({
       .getElementById("trip-details")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [trip.id]);
-  async function book(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (busy || seats.loading || seats.error || !chosen.length || needsReplacement) return;
+  useEffect(() => {
+    document.getElementById("booking-stage-heading")?.focus({ preventScroll: true });
+  }, [reviewing]);
+  async function book() {
+    if (!reviewing || busy || seats.loading || seats.error || !chosen.length || needsReplacement) return;
     setBusy(true);
     setError("");
     try {
@@ -792,6 +798,7 @@ function TripPanel({
       navigate("/bookings/" + b.id);
     } catch (e) {
       setError((e as Error).message);
+      setReviewing(false);
       if (e instanceof ApiError && e.status === 409) {
         await refreshSeats();
       }
@@ -809,12 +816,22 @@ function TripPanel({
     <Card
       title={trip.origin + " → " + trip.destination}
       actions={
-        <button onClick={close} aria-label="Close trip">
+        <button onClick={close} disabled={busy} aria-label="Close trip">
           <X size={18} />
         </button>
       }
     >
-      <div className="seat-content">
+      {can("bookings.create") && <BookingProgress stage={reviewing ? "review" : "passengers"} />}
+      {reviewing && (
+        <BookingReview
+          route={`${trip.origin} → ${trip.destination}`}
+          departure={date(trip.departure_at)} arrival={date(trip.arrival_at)}
+          bus={trip.bus} gate={trip.gate}
+          total={money(passengers.length * trip.fare)} passengers={passengers}
+          busy={busy} onEdit={() => setReviewing(false)} onReserve={book}
+        />
+      )}
+      {!reviewing && <div className="seat-content">
         <div>
           <p className="eyebrow">FRONT OF BUS</p>
           <State {...seats}>
@@ -862,11 +879,16 @@ function TripPanel({
         </div>
         <div>
           {can("bookings.create") ? (
-            <form onSubmit={book}>
-              <h3>Passenger details</h3>
+            <form onSubmit={e => {
+              e.preventDefault();
+              if (busy || seats.loading || seats.error || !chosen.length || needsReplacement) return;
+              setError("");
+              setReviewing(true);
+            }}>
+              <h3 id="booking-stage-heading" tabIndex={-1}>Passenger details</h3>
               <p className="muted">
-                Full-route tickets. Your seats are held when you submit this
-                form.
+                Full-route tickets. Next, review your details before reserving.
+                Seats are only held after you select Reserve seats on the review step.
               </p>
               {needsReplacement && (
                 <p className="notice" role="alert">
@@ -923,7 +945,7 @@ function TripPanel({
                 className="primary wide"
                 disabled={!chosen.length || needsReplacement || busy || seats.loading || !!seats.error}
               >
-                {busy ? "Reserving…" : "Reserve seats & review"}
+                {busy ? "Refreshing seats…" : "Review reservation"}
               </button>
             </form>
           ) : (
@@ -965,7 +987,7 @@ function TripPanel({
             </div>
           )}
         </div>
-      </div>
+      </div>}
       {stops.data && (
         <div className="route-map">
           <RouteMap nodes={stops.data as any} />
@@ -1143,6 +1165,8 @@ function BookingDetail({ id, branding }: { id: string; branding: Row }) {
       <State {...result}>
         {b && (
           <>
+            {b.status === "held" && <BookingProgress stage="payment" />}
+            {b.status === "confirmed" && b.ticket && <BookingProgress stage="ticket" />}
             <Card>
               <div className="section-heading">
                 <h2>{b.reference}</h2>

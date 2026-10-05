@@ -31,10 +31,12 @@ Use the sun/moon button to change the theme. On a phone, use the menu button or 
 3. Review the bus, departure time, arrival time, boarding gate, fare, and available seats.
 4. Select **Choose seats** and choose up to six available seats. Selected seats turn blue; grey seats cannot be selected.
 5. Enter each passenger's full name and phone number.
-6. Check the total and select **Reserve seats & review**.
-7. Keep the booking reference and note the hold deadline.
+6. Select **Review reservation** to check the trip, seats, passenger details, and total. Use **Back to seats & passengers** to make changes.
+7. Select **Reserve seats** to start the hold. Keep the booking reference and note the hold deadline.
 
-Selecting a seat alone does not reserve it. The hold starts when you submit the passenger form and lasts 10 minutes by default. If someone reserves a seat first, choose another one and try again.
+The progress indicator follows **Trip → Seats & passengers → Review → Awaiting payment → Ticket**. The ticket step appears after staff confirms payment.
+
+Selecting a seat or opening the review does not reserve it. The hold starts when you select **Reserve seats** on the review step and lasts 10 minutes by default. If someone reserves a seat first, choose another one and try again.
 
 If a reservation fails because seats became unavailable, BusFlow refreshes availability and marks affected passengers as needing replacement seats. Names and phone numbers are retained, and still-available seats remain selected. Choose replacements in passenger order, or explicitly remove a passenger, before submitting again. If availability cannot be refreshed, use **Retry seat availability** before continuing.
 
@@ -76,7 +78,7 @@ Cancelling a paid booking creates a refund request. The default refund is 90% of
 ## 7. Counter staff: sell tickets
 
 1. Sign in with your assigned counter account.
-2. Search for a trip, choose seats, enter passenger details, and select **Reserve seats & review**.
+2. Search for a trip, choose seats, enter passenger details, select **Review reservation**, then **Reserve seats**.
 3. After receiving and verifying payment, use **Record received payment**.
 4. Choose **Cash**, **Bank transfer**, or **Mobile wallet** and enter the unique receipt or transaction reference.
 5. Select **Confirm payment received**.

@@ -283,6 +283,48 @@ th {
 .hold-countdown strong {
   font-variant-numeric: tabular-nums;
 }
+.booking-progress {
+  margin-bottom: 20px;
+}
+.booking-progress ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.booking-progress li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--color-outline-variant, #d9e0e6);
+  border-radius: 9px;
+  font-size: 13px;
+}
+.booking-progress li[aria-current="step"] {
+  border-color: #1863c5;
+  box-shadow: inset 0 0 0 1px #1863c5;
+  font-weight: 700;
+}
+.booking-step-number {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.booking-review-passengers {
+  padding: 0;
+  list-style: none;
+}
+.booking-review-passengers li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-outline-variant, #d9e0e6);
+  overflow-wrap: anywhere;
+}
 .payment-contact-actions {
   display: flex;
   flex-wrap: wrap;
