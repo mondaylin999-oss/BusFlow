@@ -23,6 +23,7 @@ import { useAuth } from "./lib/auth";
 import { usePrefs } from "./lib/prefs";
 import { Card, PageHeader, StatTile } from "./components/ui";
 import { RouteMap } from "./components/RouteMap";
+import { PaymentNextStep } from "./components/PaymentNextStep";
 import "./bus.css";
 
 type Row = Record<string, any>;
@@ -1116,11 +1117,15 @@ function BookingDetail({ id, branding }: { id: string; branding: Row }) {
                 Total <strong>{money(b.total)}</strong>
               </p>
               {b.status === "held" && (
-                <div className="notice">
-                  Seats held until {date(b.held_until)}. Authorized staff must
-                  record received payment before this deadline. Online payment
-                  is not connected in this MVP.
-                </div>
+                <PaymentNextStep
+                  reference={b.reference}
+                  total={money(b.total)}
+                  deadline={date(b.held_until)}
+                  phone={branding.phone}
+                  email={branding.email}
+                  canRecordPayment={user!.permissions.includes("payments.record")}
+                  onRefresh={result.refresh}
+                />
               )}
             </Card>
             {b.status === "held" &&

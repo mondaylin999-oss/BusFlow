@@ -49,7 +49,9 @@ This MVP does **not** accept online payments inside the application. Contact aut
 | Expired | The hold deadline passed; make a new reservation if seats are still available. |
 | Cancelled | The reservation was cancelled. |
 
-Refresh the booking page after staff confirms payment. A held reservation is not a confirmed travel ticket.
+On a held booking, use **Call company** or **Email company** to contact staff using the contact details configured in Company settings. The email action opens a draft with your booking reference, amount, and hold deadline. If no usable contact details are configured, visit the company's booking counter or contact the staff member who arranged your reservation.
+
+After arranging payment, select **Check payment status** to refresh the booking. A held reservation is not a confirmed travel ticket.
 
 ## 5. View and print tickets
 

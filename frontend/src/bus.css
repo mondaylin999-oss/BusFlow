@@ -277,6 +277,18 @@ th {
 .error {
   color: #c1443c;
 }
+.payment-next-step p {
+  margin: 12px 0;
+}
+.payment-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.payment-contact-actions .button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .seat-content {
   display: grid;
   grid-template-columns: minmax(220px, 330px) 1fr;
