@@ -118,10 +118,10 @@ npm test
 cd ../frontend
 npm run check
 npm run build
-node ../backend/node_modules/vitest/vitest.mjs run tests/bookingWatcher.test.ts
+node ../backend/node_modules/vitest/vitest.mjs run tests
 ```
 
-The booking watcher tests use the backend's installed Vitest runner and fake timers; no database is required.
+The frontend tests use the backend's installed Vitest runner and cover booking status timing and seat-conflict recovery; no database is required.
 
 For database/API tests, create a disposable database, point `backend/.env` to it, run migration and seed, then:
 

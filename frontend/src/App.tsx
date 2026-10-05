@@ -18,7 +18,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { api } from "./lib/api";
+import { api, ApiError } from "./lib/api";
 import { useAuth } from "./lib/auth";
 import { usePrefs } from "./lib/prefs";
 import { Card, PageHeader, StatTile } from "./components/ui";
@@ -26,6 +26,7 @@ import { RouteMap } from "./components/RouteMap";
 import { PaymentNextStep } from "./components/PaymentNextStep";
 import { useLiveBooking } from "./lib/useLiveBooking";
 import { holdSeconds, type HeldBooking } from "./lib/bookingWatcher";
+import { reconcileSeats, toggleSeat, type PassengerDraft, type SeatAvailability } from "./lib/seatSelection";
 import "./bus.css";
 
 type Row = Record<string, any>;
@@ -50,9 +51,12 @@ function useData<T>(path: string) {
     setLoading(true);
     setError("");
     try {
-      setData(await api.get<T>(path));
+      const next = await api.get<T>(path);
+      setData(next);
+      return next;
     } catch (e) {
       setError((e as Error).message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -759,11 +763,13 @@ function TripPanel({
   refresh: () => void;
 }) {
   const { user } = useAuth();
-  const seats = useData<Row[]>("/trips/" + trip.id + "/seats"),
+  const seats = useData<(Row & SeatAvailability)[]>("/trips/" + trip.id + "/seats"),
     stops = useData<Row[]>("/trips/" + trip.id + "/stops");
-  const [chosen, setChosen] = useState<number[]>([]),
+  const [passengers, setPassengers] = useState<PassengerDraft[]>([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const chosen = passengers.flatMap(p => p.seatId === null ? [] : [p.seatId]);
+  const needsReplacement = passengers.some(p => p.seatId === null);
   const [, navigate] = useLocation();
   const can = (p: string) => user!.permissions.includes(p);
   useEffect(() => {
@@ -773,24 +779,30 @@ function TripPanel({
   }, [trip.id]);
   async function book(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy || seats.loading || seats.error || !chosen.length || needsReplacement) return;
     setBusy(true);
     setError("");
-    const f = new FormData(e.currentTarget);
     try {
       const b = await api.post<Row>("/bookings", {
         tripId: trip.id,
-        passengers: chosen.map((seatId) => ({
-          seatId,
-          name: String(f.get("name" + seatId)),
-          phone: String(f.get("phone" + seatId)),
+        passengers: passengers.map(({ seatId, name, phone }) => ({
+          seatId, name, phone,
         })),
       });
       navigate("/bookings/" + b.id);
     } catch (e) {
       setError((e as Error).message);
-      void seats.refresh();
+      if (e instanceof ApiError && e.status === 409) {
+        await refreshSeats();
+      }
     } finally {
       setBusy(false);
+    }
+  }
+  async function refreshSeats() {
+    const latest = await seats.refresh();
+    if (latest) {
+      setPassengers(current => reconcileSeats(current, latest));
     }
   }
   return (
@@ -824,17 +836,15 @@ function TripPanel({
                     (chosen.includes(s.id) ? " selected" : "")
                   }
                   disabled={
+                    busy ||
                     !can("bookings.create") ||
                     s.status !== "available" ||
                     (!chosen.includes(s.id) && chosen.length >= 6)
                   }
-                  onClick={() =>
-                    setChosen(
-                      chosen.includes(s.id)
-                        ? chosen.filter((id) => id !== s.id)
-                        : [...chosen, s.id],
-                    )
-                  }
+                  onClick={() => {
+                    setPassengers(current => toggleSeat(current, s.id, s.seat_number));
+                    setError("");
+                  }}
                 >
                   {s.seat_number}
                 </button>
@@ -844,6 +854,11 @@ function TripPanel({
               Blue: selected · Grey: booked/held · Choose up to 6 seats
             </p>
           </State>
+          {seats.error && (
+            <button type="button" disabled={busy || seats.loading} onClick={refreshSeats}>
+              Retry seat availability
+            </button>
+          )}
         </div>
         <div>
           {can("bookings.create") ? (
@@ -853,22 +868,46 @@ function TripPanel({
                 Full-route tickets. Your seats are held when you submit this
                 form.
               </p>
-              {chosen.map((seatId) => (
-                <div className="passenger-form" key={seatId}>
+              {needsReplacement && (
+                <p className="notice" role="alert">
+                  Some selected seats are no longer available. Your passenger details
+                  are saved below. Choose a replacement for each passenger marked
+                  below; new selections fill these passengers in order. No seats
+                  have been reserved yet.
+                </p>
+              )}
+              {passengers.map((passenger, index) => (
+                <div className="passenger-form" key={index}>
                   <strong>
-                    Seat {seats.data?.find((s) => s.id === seatId)?.seat_number}
+                    {passenger.seatId === null
+                      ? `Seat ${passenger.seatNumber} unavailable — choose a replacement`
+                      : `Seat ${passenger.seatNumber}`}
                   </strong>
                   <Field label="Full name">
-                    <input name={"name" + seatId} required maxLength={160} />
+                    <input
+                      name={"name" + index} required maxLength={160}
+                      value={passenger.name} readOnly={busy}
+                      onChange={e => setPassengers(current => current.map((p, i) => i === index ? { ...p, name: e.target.value } : p))}
+                    />
                   </Field>
                   <Field label="Phone">
                     <input
-                      name={"phone" + seatId}
+                      name={"phone" + index}
+                      type="tel"
+                      value={passenger.phone}
+                      readOnly={busy}
+                      onChange={e => setPassengers(current => current.map((p, i) => i === index ? { ...p, phone: e.target.value } : p))}
                       required
                       minLength={5}
                       maxLength={30}
                     />
                   </Field>
+                  {passenger.seatId === null && (
+                    <button type="button" disabled={busy || seats.loading}
+                      onClick={() => setPassengers(current => current.filter((_, i) => i !== index))}>
+                      Remove this passenger
+                    </button>
+                  )}
                 </div>
               ))}
               {error && (
@@ -877,11 +916,12 @@ function TripPanel({
                 </p>
               )}
               <p className="total">
-                Total <strong>{money(chosen.length * trip.fare)}</strong>
+                Total for {passengers.length} passenger{passengers.length === 1 ? "" : "s"}{" "}
+                <strong>{money(passengers.length * trip.fare)}</strong>
               </p>
               <button
                 className="primary wide"
-                disabled={!chosen.length || busy}
+                disabled={!chosen.length || needsReplacement || busy || seats.loading || !!seats.error}
               >
                 {busy ? "Reserving…" : "Reserve seats & review"}
               </button>

@@ -36,6 +36,8 @@ Use the sun/moon button to change the theme. On a phone, use the menu button or 
 
 Selecting a seat alone does not reserve it. The hold starts when you submit the passenger form and lasts 10 minutes by default. If someone reserves a seat first, choose another one and try again.
 
+If a reservation fails because seats became unavailable, BusFlow refreshes availability and marks affected passengers as needing replacement seats. Names and phone numbers are retained, and still-available seats remain selected. Choose replacements in passenger order, or explicitly remove a passenger, before submitting again. If availability cannot be refreshed, use **Retry seat availability** before continuing.
+
 All departure times use Myanmar time. Prices are in Myanmar kyat (MMK). Tickets cover the full route; booking individual sections between stops is not included.
 
 ## 4. Arrange payment and confirm the booking
