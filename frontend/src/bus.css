@@ -280,6 +280,9 @@ th {
 .payment-next-step p {
   margin: 12px 0;
 }
+.hold-countdown strong {
+  font-variant-numeric: tabular-nums;
+}
 .payment-contact-actions {
   display: flex;
   flex-wrap: wrap;

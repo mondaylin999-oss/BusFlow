@@ -2,6 +2,8 @@ type Props = {
   reference: string;
   total: string;
   deadline: string;
+  remaining: number;
+  checking: boolean;
   phone?: string;
   email?: string;
   canRecordPayment: boolean;
@@ -12,6 +14,8 @@ export function PaymentNextStep({
   reference,
   total,
   deadline,
+  remaining,
+  checking,
   phone,
   email,
   canRecordPayment,
@@ -27,9 +31,23 @@ export function PaymentNextStep({
     body: `Hello, I would like to arrange payment for booking ${reference}.\nTotal: ${total}.\nSeats held until: ${deadline} (Myanmar time).\nPlease let me know how to pay and confirm my booking.`,
   }).toString().replace(/\+/g, "%20");
 
+  if (remaining <= 0) return (
+    <section className="notice payment-next-step" aria-label="Payment next step">
+      <h3>Hold deadline reached</h3>
+      <p role="status">Checking the latest booking status. Do not send payment until staff confirms your reservation is still valid.</p>
+      <p>Booking reference: <strong>{reference}</strong></p>
+      <button type="button" onClick={onRefresh} disabled={checking}>
+        {checking ? "Checking status…" : "Check booking status"}
+      </button>
+    </section>
+  );
+
   return (
     <section className="notice payment-next-step" aria-label="Payment next step">
       <h3>{canRecordPayment ? "Next: record received payment" : "Next: arrange payment"}</h3>
+      <p className="hold-countdown" role="timer" aria-live="off">
+        Time left to confirm payment: <strong>{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</strong>
+      </p>
       <p>
         Your seats are held until <strong>{deadline} (Myanmar time)</strong>.
         This reservation is awaiting payment confirmation; it is not yet a travel ticket.
@@ -62,8 +80,10 @@ export function PaymentNextStep({
           counter or contact the staff member who arranged your reservation.
         </p>
       )}
-      <p>Already paid? Check for staff confirmation before using this reservation to travel.</p>
-      <button type="button" onClick={onRefresh}>Check payment status</button>
+      <p>Already paid? Status updates automatically every 15 seconds. Wait for staff confirmation before using this reservation to travel.</p>
+      <button type="button" onClick={onRefresh} disabled={checking}>
+        {checking ? "Checking status…" : "Check payment status"}
+      </button>
     </section>
   );
 }

@@ -24,6 +24,8 @@ import { usePrefs } from "./lib/prefs";
 import { Card, PageHeader, StatTile } from "./components/ui";
 import { RouteMap } from "./components/RouteMap";
 import { PaymentNextStep } from "./components/PaymentNextStep";
+import { useLiveBooking } from "./lib/useLiveBooking";
+import { holdSeconds, type HeldBooking } from "./lib/bookingWatcher";
 import "./bus.css";
 
 type Row = Record<string, any>;
@@ -1059,12 +1061,13 @@ function Bookings() {
   );
 }
 function BookingDetail({ id, branding }: { id: string; branding: Row }) {
-  const result = useData<Row>("/bookings/" + id);
+  const result = useLiveBooking<Row & HeldBooking>(id);
   const { user } = useAuth();
   const [qr, setQr] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const b = result.data;
+  const remaining = b ? holdSeconds(b.held_until, result.now) : 0;
   useEffect(() => {
     if (b?.ticket)
       void QRCode.toDataURL(b.ticket.number, { width: 150, margin: 1 }).then(
@@ -1091,13 +1094,19 @@ function BookingDetail({ id, branding }: { id: string; branding: Row }) {
         title="Booking details"
         actions={<Link href="/bookings">All bookings</Link>}
       />
+      {result.refreshError && (
+        <p role="alert" className="notice error">
+          Could not update booking status: {result.refreshError}. Showing the last
+          received status. <button onClick={result.refresh} disabled={result.checking}>Retry</button>
+        </p>
+      )}
       <State {...result}>
         {b && (
           <>
             <Card>
               <div className="section-heading">
                 <h2>{b.reference}</h2>
-                <Badge>{b.status}</Badge>
+                <span role="status"><Badge>{b.status}</Badge></span>
               </div>
               <h3>
                 {b.trip.origin} → {b.trip.destination}
@@ -1121,6 +1130,8 @@ function BookingDetail({ id, branding }: { id: string; branding: Row }) {
                   reference={b.reference}
                   total={money(b.total)}
                   deadline={date(b.held_until)}
+                  remaining={remaining}
+                  checking={result.checking}
                   phone={branding.phone}
                   email={branding.email}
                   canRecordPayment={user!.permissions.includes("payments.record")}
@@ -1128,7 +1139,15 @@ function BookingDetail({ id, branding }: { id: string; branding: Row }) {
                 />
               )}
             </Card>
+            {b.status === "expired" && (
+              <div className="notice" role="status">
+                Your seat hold has expired. If you already paid, contact company staff
+                with reference <strong>{b.reference}</strong> before booking again.
+                {" "}<Link href="/trips">Find another trip</Link>
+              </div>
+            )}
             {b.status === "held" &&
+              remaining > 0 &&
               user!.permissions.includes("payments.record") && (
                 <Card title="Record received payment">
                   <form onSubmit={pay} className="filters">

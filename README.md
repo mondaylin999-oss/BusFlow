@@ -51,7 +51,7 @@ This MVP does **not** accept online payments inside the application. Contact aut
 
 On a held booking, use **Call company** or **Email company** to contact staff using the contact details configured in Company settings. The email action opens a draft with your booking reference, amount, and hold deadline. If no usable contact details are configured, visit the company's booking counter or contact the staff member who arranged your reservation.
 
-After arranging payment, select **Check payment status** to refresh the booking. A held reservation is not a confirmed travel ticket.
+Held bookings show a live countdown and check status automatically every 15 seconds, at the hold deadline, and when you return to the browser tab. You can also select **Check payment status**. Confirmation displays your ticket automatically; expiry shows a link to find another trip. If a refresh fails, the last received booking remains visible with an error and retry action. A held reservation is not a confirmed travel ticket.
 
 ## 5. View and print tickets
 
