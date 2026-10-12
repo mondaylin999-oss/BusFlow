@@ -8,6 +8,7 @@ import { ENV } from "./env.js";
 import {
   hashPassword,
   verifyPassword,
+  isLegacyPasswordHash,
   createSessionToken,
   readSessionToken,
   consumeLoginAttempt,
@@ -179,9 +180,16 @@ app.post(
       "SELECT * FROM users WHERE username=$1 AND status='active'",
       [input.username],
     );
-    if (!rows[0] || !verifyPassword(input.password, rows[0].password_hash)) {
+    if (!rows[0] || !(await verifyPassword(input.password, rows[0].password_hash))) {
       console.warn("[auth] Login failed");
       throw new HttpError(401, "Invalid username or password");
+    }
+    if (isLegacyPasswordHash(rows[0].password_hash)) {
+      const upgradedHash = await hashPassword(input.password);
+      await pool.query(
+        "UPDATE users SET password_hash=$1 WHERE id=$2 AND password_hash=$3",
+        [upgradedHash, rows[0].id, rows[0].password_hash],
+      );
     }
     const u = await loadUser(rows[0].id);
     res.json({
@@ -211,9 +219,10 @@ app.post(
       await pool.query("SELECT id FROM companies ORDER BY id LIMIT 1")
     ).rows[0];
     if (!company) throw new HttpError(503, "Company has not been configured");
+    const passwordHash = await hashPassword(input.password);
     const { rows } = await pool.query(
       `INSERT INTO users(username,name,password_hash,role,company_id) VALUES($1,$2,$3,'customer',$4) RETURNING id`,
-      [input.username, input.name, hashPassword(input.password), company.id],
+      [input.username, input.name, passwordHash, company.id],
     );
     const u = await loadUser(rows[0].id);
     res
@@ -257,10 +266,10 @@ app.post(
       })
       .parse(req.body);
     const u = await loadUser(req.user.id);
-    if (!verifyPassword(input.currentPassword, u.password_hash))
+    if (!(await verifyPassword(input.currentPassword, u.password_hash)))
       throw new HttpError(403, "Current password is incorrect");
     await pool.query("UPDATE users SET password_hash=$1 WHERE id=$2", [
-      hashPassword(input.password),
+      await hashPassword(input.password),
       u.id,
     ]);
     res.json({ ok: true });
@@ -1037,13 +1046,14 @@ app.post(
           throw new HttpError(403, "Branch outside scope");
         if (i.role === "counter_staff" && !i.counter_id)
           throw new HttpError(400, "Counter staff require a counter");
+        const passwordHash = await hashPassword(i.password);
         const row = (
           await db.query(
             "INSERT INTO users(username,name,password_hash,role,company_id,branch_id,counter_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id",
             [
               i.username,
               i.name,
-              hashPassword(i.password),
+              passwordHash,
               i.role,
               req.user.company_id,
               i.branch_id,

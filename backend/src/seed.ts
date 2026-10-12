@@ -166,14 +166,13 @@ await transaction(async (db) => {
     ["customer02", "customer", null, null, null],
     ["agent02", "agent", 2, 4, null],
   ];
-  const hash = hashPassword(password);
   for (const [username, role, region, branch, counter] of accounts)
     await db.query(
       "INSERT INTO users(username,name,password_hash,role,company_id,region_id,branch_id,counter_id) VALUES($1,$2,$3,$4,1,$5,$6,$7)",
       [
         username,
         String(username).replace("01", ""),
-        hash,
+        await hashPassword(password),
         role,
         region,
         branch,

@@ -5,46 +5,58 @@
 //  is gone: this version owns its accounts, so it runs entirely on your own
 //  computer with nothing but PostgreSQL.
 //
-//  * passwords     scrypt with a per-account random salt, compared in
-//                  constant time (never store or log a plain password)
+//  * passwords     Argon2id with a per-account salt; legacy scrypt hashes are
+//                  verified and upgraded on successful login
 //  * sessions      a signed JWT the browser keeps in localStorage and sends
 //                  as  Authorization: Bearer <token>
 //  * rate limiting a small in-process counter per IP on /auth/login
 // ===========================================================================
 
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { scryptSync, timingSafeEqual } from "node:crypto";
+import argon2 from "argon2";
 import { SignJWT, jwtVerify } from "jose";
 import { ENV } from "./env.js";
 
 const KEY_LENGTH = 64;
+const ARGON2_OPTIONS = {
+  type: argon2.argon2id,
+  memoryCost: 19_456,
+  timeCost: 2,
+  parallelism: 1,
+} as const;
+const ARGON2_HASH =
+  /^\$argon2id\$v=19\$m=19456,p=1,t=2\$[A-Za-z0-9+/]+={0,2}\$[A-Za-z0-9+/]+={0,2}$/;
+const SCRYPT_HASH = /^scrypt:([a-f\d]{32}):([a-f\d]{128})$/i;
 
 // --- passwords -------------------------------------------------------------
 
-export function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const derivedKey = scryptSync(password, salt, KEY_LENGTH).toString("hex");
-  return `scrypt:${salt}:${derivedKey}`;
+export function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, ARGON2_OPTIONS);
 }
 
-export function verifyPassword(
+export async function verifyPassword(
   password: string,
   storedHash: string | null | undefined,
-) {
+): Promise<boolean> {
   if (!storedHash) return false;
-  const [algorithm, salt, key] = storedHash.split(":");
-  if (algorithm !== "scrypt" || !salt || !key) return false;
+  if (ARGON2_HASH.test(storedHash))
+    return argon2.verify(storedHash, password);
+  const legacyHash = SCRYPT_HASH.exec(storedHash);
+  if (!legacyHash) return false;
+  const [, salt, key] = legacyHash;
   const expected = Buffer.from(key, "hex");
   const actual = scryptSync(password, salt, KEY_LENGTH);
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
-/** A hash that was never produced by hashPassword can never match — repair it. */
+/** Whether a stored hash is structurally valid for either supported format. */
 export function isUsableHash(storedHash: string | null | undefined) {
-  return (
-    typeof storedHash === "string" &&
-    storedHash.startsWith("scrypt:") &&
-    storedHash.split(":").length === 3
-  );
+  return typeof storedHash === "string" &&
+    (ARGON2_HASH.test(storedHash) || SCRYPT_HASH.test(storedHash));
+}
+
+export function isLegacyPasswordHash(storedHash: string | null | undefined) {
+  return typeof storedHash === "string" && SCRYPT_HASH.test(storedHash);
 }
 
 // --- session tokens --------------------------------------------------------
