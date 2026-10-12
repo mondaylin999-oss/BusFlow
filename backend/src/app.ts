@@ -70,6 +70,18 @@ async function loadUser(userId: number) {
   );
   return rows[0];
 }
+const requireAuth: express.RequestHandler = (req, _res, next) => {
+  void (async () => {
+    const token = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "";
+    const claims = await readSessionToken(token);
+    if (!claims) throw new HttpError(401, "Please sign in");
+    const user = await loadUser(claims.uid);
+    if (!user) throw new HttpError(401, "Account is inactive");
+    (req as Request).user = safeUser(user) as User;
+  })().then(() => next(), next);
+};
 async function branch(db: PoolClient, branchId: number) {
   const { rows } = await db.query(
     "SELECT b.*,c.region_id,r.company_id FROM branches b JOIN cities c ON c.id=b.city_id JOIN regions r ON r.id=c.region_id WHERE b.id=$1",
@@ -238,19 +250,7 @@ app.post(
       });
   }),
 );
-app.use((req, res, next) => {
-  (async () => {
-    const token = req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7)
-      : "";
-    const claims = await readSessionToken(token);
-    if (!claims) throw new HttpError(401, "Please sign in");
-    const user = await loadUser(claims.uid);
-    if (!user) throw new HttpError(401, "Account is inactive");
-    (req as Request).user = safeUser(user) as User;
-    next();
-  })().catch(next);
-});
+app.use(requireAuth);
 app.get(
   "/auth/me",
   route(async (req, res) => res.json({ user: req.user })),
