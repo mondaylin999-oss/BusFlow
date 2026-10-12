@@ -19,13 +19,17 @@
 //
 //  SESSIONS
 //  --------
-//  Login returns a JWT. It is kept in localStorage and sent on every request
-//  as  Authorization: Bearer <token>.  There are no cookies, so nothing
-//  breaks when the app and the API are on different addresses.
+//  The backend stores the JWT in an HttpOnly, Secure, SameSite=Lax cookie.
+//  Requests include credentials so the browser can send that cookie.
 // ===========================================================================
 
-const TOKEN_KEY = "busflow_token";
 const BASE_CACHE_KEY = "busflow_api_base";
+
+try {
+  localStorage.removeItem("busflow_token");
+} catch {
+  // Storage can be unavailable in private browsing.
+}
 
 function candidateBaseUrls(): string[] {
   const list: string[] = [];
@@ -115,25 +119,6 @@ export class ApiError extends Error {
   }
 }
 
-// --- session token ---------------------------------------------------------
-
-export function getToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setToken(token: string | null) {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* private browsing — the session then lasts for this page only */
-  }
-}
-
 // --- requests --------------------------------------------------------------
 
 type RequestOptions = {
@@ -157,8 +142,6 @@ export async function request<T>(
   }
 
   const headers: Record<string, string> = { Accept: "application/json" };
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   let response: Response;
@@ -166,6 +149,7 @@ export async function request<T>(
     response = await fetch(url.toString(), {
       method: options.method ?? "GET",
       headers,
+      credentials: "include",
       body:
         options.body === undefined ? undefined : JSON.stringify(options.body),
     });
@@ -187,7 +171,6 @@ export async function request<T>(
         "error" in payload &&
         String((payload as any).error)) ||
       `Request failed (${response.status}).`;
-    if (response.status === 401) setToken(null);
     throw new ApiError(response.status, String(message));
   }
 

@@ -145,7 +145,7 @@ Display currency and time are currently MMK and Myanmar time. Other currencies/t
 
 Build the frontend and serve `frontend/dist` from a web server, using `try_files $uri /index.html` for client routes. Proxy `/api/` to `http://127.0.0.1:8000/` and use HTTPS. Backend: `npm run build`, then `npm run serve`. Set `NODE_ENV=production`, a strong secret, database credentials for a dedicated application role, and `FRONTEND_ORIGIN` to the HTTPS frontend origin. Use a process supervisor and a restricted database account; keep PostgreSQL private. There is no hosted service dependency for business data.
 
-JWTs last eight hours. Logout removes the browser token; server-side revocation, MFA, password reset mail and distributed throttling are future work. A password-change API exists but has no settings UI yet. The in-process login limiter is intended for one API process; an internet-facing installation needs perimeter rate limiting. The endpoint `/health` reports database status without credentials. This MVP has not had an independent production security review.
+JWTs last eight hours and are stored in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie. Keep the frontend and API on the same site and serve them over HTTPS so browsers accept and send the session cookie. Logout clears the cookie; server-side revocation, MFA, password reset mail and distributed throttling are future work. A password-change API exists but has no settings UI yet. The in-process login limiter is intended for one API process; an internet-facing installation needs perimeter rate limiting. The endpoint `/health` reports database status without credentials. This MVP has not had an independent production security review.
 
 ### Database backup and restore
 

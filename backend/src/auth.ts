@@ -7,8 +7,7 @@
 //
 //  * passwords     Argon2id with a per-account salt; legacy scrypt hashes are
 //                  verified and upgraded on successful login
-//  * sessions      a signed JWT the browser keeps in localStorage and sends
-//                  as  Authorization: Bearer <token>
+//  * sessions      an HttpOnly, Secure, SameSite=Lax cookie stores the signed JWT
 //  * rate limiting a small in-process counter per IP on /auth/login
 // ===========================================================================
 
@@ -62,6 +61,34 @@ export function isLegacyPasswordHash(storedHash: string | null | undefined) {
 // --- session tokens --------------------------------------------------------
 
 const secretKey = new TextEncoder().encode(ENV.jwtSecret);
+export const SESSION_COOKIE_NAME = "busflow_session";
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "lax",
+  path: "/",
+  maxAge: ENV.jwtExpireMinutes * 60 * 1000,
+} as const;
+export const SESSION_COOKIE_CLEAR_OPTIONS = {
+  httpOnly: SESSION_COOKIE_OPTIONS.httpOnly,
+  secure: SESSION_COOKIE_OPTIONS.secure,
+  sameSite: SESSION_COOKIE_OPTIONS.sameSite,
+  path: SESSION_COOKIE_OPTIONS.path,
+} as const;
+
+export function readSessionCookie(cookieHeader: string | undefined) {
+  if (!cookieHeader) return null;
+  const matches = cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => cookie.startsWith(`${SESSION_COOKIE_NAME}=`));
+  if (matches.length !== 1) return null;
+  try {
+    return decodeURIComponent(matches[0].slice(SESSION_COOKIE_NAME.length + 1));
+  } catch {
+    return null;
+  }
+}
 
 export type SessionClaims = {
   sub: string;
@@ -85,8 +112,9 @@ export async function createSessionToken(claims: SessionClaims) {
 }
 
 export async function readSessionToken(
-  token: string,
+  token: string | null,
 ): Promise<SessionClaims | null> {
+  if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secretKey, {
       issuer: "busflow",
@@ -101,18 +129,6 @@ export async function readSessionToken(
   } catch {
     return null;
   }
-}
-
-/** Pulls the token out of the Authorization header (or an ?access_token query). */
-export function extractToken(
-  headerValue: string | undefined,
-  queryValue?: unknown,
-) {
-  if (headerValue?.toLowerCase().startsWith("bearer "))
-    return headerValue.slice(7).trim();
-  if (typeof queryValue === "string" && queryValue.trim())
-    return queryValue.trim();
-  return null;
 }
 
 // --- brute-force protection ------------------------------------------------

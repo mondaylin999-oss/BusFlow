@@ -1,11 +1,9 @@
 // ===========================================================================
 //  auth.tsx — who is signed in, for the whole app.
 //
-//  The session token lives in localStorage (see lib/api.ts). On boot the app
-//  asks the backend "who am I?" once; every screen then reads the answer from
-//  this context instead of asking again.
+//  The backend validates the HttpOnly session cookie on boot; screens read
+//  the resulting user from this context instead of storing session tokens.
 // ===========================================================================
-
 import {
   createContext,
   useCallback,
@@ -18,8 +16,6 @@ import {
 import {
   api,
   ApiError,
-  getToken,
-  setToken,
   type Health,
   type SessionUser,
 } from "./api";
@@ -64,15 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!getToken()) {
-      setUser(null);
-      return;
-    }
     try {
       const response = await api.get<{ user: SessionUser | null }>("/auth/me");
       setUser(response.user);
     } catch {
-      setToken(null);
       setUser(null);
     }
   }, []);
@@ -89,11 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const login = useCallback(async (username: string, password: string) => {
-    const response = await api.post<{ token: string; user: SessionUser }>(
+    const response = await api.post<{ user: SessionUser }>(
       "/auth/login",
       { username, password },
     );
-    setToken(response.token);
     setUser(response.user);
     setError(null);
     return response.user;
@@ -106,11 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email?: string;
       password: string;
     }) => {
-      const response = await api.post<{ token: string; user: SessionUser }>(
+      const response = await api.post<{ user: SessionUser }>(
         "/auth/register",
         input,
       );
-      setToken(response.token);
       setUser(response.user);
       setError(null);
       return response.user;
@@ -119,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    setToken(null);
     setUser(null);
     void api.post("/auth/logout").catch(() => undefined);
   }, []);

@@ -11,6 +11,10 @@ import {
   isLegacyPasswordHash,
   createSessionToken,
   readSessionToken,
+  readSessionCookie,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  SESSION_COOKIE_CLEAR_OPTIONS,
   consumeLoginAttempt,
 } from "./auth.js";
 import {
@@ -25,7 +29,16 @@ import { calculatePercent } from "./rules.js";
 
 export const app = express();
 app.disable("x-powered-by");
-app.use(cors({ origin: ENV.origin }));
+app.use(cors({ origin: ENV.origin, credentials: true }));
+app.use((req, res, next) => {
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    req.get("Origin") &&
+    req.get("Origin") !== ENV.origin
+  )
+    return res.status(403).json({ error: "Untrusted request origin" });
+  next();
+});
 app.use(express.json({ limit: "64kb" }));
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -70,15 +83,19 @@ async function loadUser(userId: number) {
   );
   return rows[0];
 }
-const requireAuth: express.RequestHandler = (req, _res, next) => {
+const requireAuth: express.RequestHandler = (req, res, next) => {
   void (async () => {
-    const token = req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7)
-      : "";
+    const token = readSessionCookie(req.headers.cookie);
     const claims = await readSessionToken(token);
-    if (!claims) throw new HttpError(401, "Please sign in");
+    if (!claims) {
+      res.clearCookie(SESSION_COOKIE_NAME, SESSION_COOKIE_CLEAR_OPTIONS);
+      throw new HttpError(401, "Please sign in");
+    }
     const user = await loadUser(claims.uid);
-    if (!user) throw new HttpError(401, "Account is inactive");
+    if (!user) {
+      res.clearCookie(SESSION_COOKIE_NAME, SESSION_COOKIE_CLEAR_OPTIONS);
+      throw new HttpError(401, "Account is inactive");
+    }
     (req as Request).user = safeUser(user) as User;
   })().then(() => next(), next);
 };
@@ -204,15 +221,17 @@ app.post(
       );
     }
     const u = await loadUser(rows[0].id);
-    res.json({
-      token: await createSessionToken({
-        sub: String(u.id),
-        uid: u.id,
-        role: u.role,
-        username: u.username,
+    res.cookie(
+      SESSION_COOKIE_NAME,
+      await createSessionToken({
+      sub: String(u.id),
+      uid: u.id,
+      role: u.role,
+      username: u.username,
       }),
-      user: safeUser(u),
-    });
+      SESSION_COOKIE_OPTIONS,
+    );
+    res.json({ user: safeUser(u) });
   }),
 );
 app.post(
@@ -237,17 +256,17 @@ app.post(
       [input.username, input.name, passwordHash, company.id],
     );
     const u = await loadUser(rows[0].id);
-    res
-      .status(201)
-      .json({
-        token: await createSessionToken({
+    res.cookie(
+      SESSION_COOKIE_NAME,
+      await createSessionToken({
           sub: String(u.id),
           uid: u.id,
           role: u.role,
           username: u.username,
         }),
-        user: safeUser(u),
-      });
+      SESSION_COOKIE_OPTIONS,
+    );
+    res.status(201).json({ user: safeUser(u) });
   }),
 );
 app.use(requireAuth);
@@ -255,7 +274,10 @@ app.get(
   "/auth/me",
   route(async (req, res) => res.json({ user: req.user })),
 );
-app.post("/auth/logout", (_req, res) => res.json({ ok: true }));
+app.post("/auth/logout", (_req, res) => {
+  res.clearCookie(SESSION_COOKIE_NAME, SESSION_COOKIE_CLEAR_OPTIONS);
+  res.json({ ok: true });
+});
 app.post(
   "/auth/password",
   route(async (req, res) => {

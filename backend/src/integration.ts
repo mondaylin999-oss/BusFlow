@@ -15,16 +15,21 @@ function check(value: unknown, label: string) {
   checks++;
   console.log("PASS " + label);
 }
-async function call(path: string, token = "", method = "GET", body?: unknown) {
+async function call(
+  path: string,
+  sessionCookie = "",
+  method = "GET",
+  body?: unknown,
+) {
   const r = await fetch(base + path, {
     method,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: "Bearer " + token } : {}),
+      ...(sessionCookie ? { Cookie: sessionCookie } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  return { status: r.status, data: (await r.json()) as any };
+  return { status: r.status, data: (await r.json()) as any, headers: r.headers };
 }
 async function login(username: string) {
   const r = await call("/auth/login", "", "POST", {
@@ -32,7 +37,9 @@ async function login(username: string) {
     password: process.env.SEED_PASSWORD,
   });
   assert.equal(r.status, 200);
-  return r.data.token as string;
+  const cookie = r.headers?.get("set-cookie");
+  assert.ok(cookie);
+  return cookie.split(";")[0];
 }
 try {
   check((await call("/health")).status === 200, "database health");

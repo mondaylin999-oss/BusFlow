@@ -5,6 +5,12 @@ process.env.DATABASE_URL ??= "postgres://localhost/busflow_test";
 process.env.JWT_SECRET ??= "test-secret-that-is-at-least-thirty-two-characters";
 
 const { app } = await import("./app.js");
+const {
+  readSessionCookie,
+  SESSION_COOKIE_CLEAR_OPTIONS,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+} = await import("./auth.js");
 let server: Server;
 let baseUrl: string;
 
@@ -26,6 +32,33 @@ afterAll(async () => {
 });
 
 describe("server-side authentication middleware", () => {
+  it("configures session cookies as HttpOnly, Secure, and SameSite=Lax", () => {
+    expect(SESSION_COOKIE_NAME).toBe("busflow_session");
+    expect(SESSION_COOKIE_OPTIONS).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 8 * 60 * 60 * 1000,
+    });
+    expect(SESSION_COOKIE_CLEAR_OPTIONS).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+    });
+  });
+
+  it("reads only a single session cookie", () => {
+    expect(readSessionCookie("theme=dark; busflow_session=abc.def")).toBe(
+      "abc.def",
+    );
+    expect(
+      readSessionCookie("busflow_session=first; busflow_session=second"),
+    ).toBeNull();
+    expect(readSessionCookie(undefined)).toBeNull();
+  });
+
   it.each([
     ["GET", "/auth/me"],
     ["GET", "/trips"],
@@ -36,6 +69,21 @@ describe("server-side authentication middleware", () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Please sign in" });
+  });
+
+  it("ignores bearer tokens and clears invalid cookies with secure flags", async () => {
+    const bearer = await fetch(baseUrl + "/auth/me", {
+      headers: { Authorization: "Bearer invalid" },
+    });
+    expect(bearer.status).toBe(401);
+
+    const invalidCookie = await fetch(baseUrl + "/auth/me", {
+      headers: { Cookie: "busflow_session=invalid" },
+    });
+    expect(invalidCookie.status).toBe(401);
+    expect(invalidCookie.headers.get("set-cookie")).toMatch(
+      /HttpOnly; Secure; SameSite=Lax/i,
+    );
   });
 
   it("keeps login and registration public", async () => {
