@@ -21,7 +21,7 @@ import QRCode from "qrcode";
 import { api, ApiError } from "./lib/api";
 import { useAuth } from "./lib/auth";
 import { usePrefs } from "./lib/prefs";
-import { Card, PageHeader, StatTile } from "./components/ui";
+import { Card, PageHeader, Skeleton, StatTile } from "./components/ui";
 import { RouteMap } from "./components/RouteMap";
 import { PaymentNextStep } from "./components/PaymentNextStep";
 import { BookingProgress } from "./components/BookingProgress";
@@ -82,9 +82,22 @@ function State({
       {error}
     </div>
   ) : loading ? (
-    <p role="status" className="notice">
-      Loading…
-    </p>
+    <div role="status" aria-label="Loading…" className="space-y-3 py-2">
+      <span className="sr-only">Loading…</span>
+      {[0, 1, 2].map((row) => (
+        <div
+          key={row}
+          className="flex items-center gap-3 rounded-lg border border-outline-variant p-4"
+        >
+          <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-2/3" />
+          </div>
+          <Skeleton className="h-4 w-16 shrink-0" />
+        </div>
+      ))}
+    </div>
   ) : (
     <>{children}</>
   );
@@ -305,7 +318,35 @@ export default function App() {
     if (branding.data?.name) document.title = branding.data.name;
   }, [branding.data]);
   if (loading)
-    return <p className="notice">Connecting to your operations portal…</p>;
+    return (
+      <main
+        className="login"
+        role="status"
+        aria-label="Connecting to your operations portal"
+      >
+        <span className="sr-only">Connecting to your operations portal…</span>
+        <section className="login-story">
+          <Skeleton className="h-10 w-10 rounded-full bg-white/20" />
+          <Skeleton className="mt-8 h-3 w-36 bg-white/20" />
+          <Skeleton className="mt-6 h-32 w-full max-w-md bg-white/20" />
+          <Skeleton className="mt-4 h-4 w-full max-w-sm bg-white/20" />
+          <Skeleton className="mt-2 h-4 w-3/4 max-w-sm bg-white/20" />
+          <Skeleton className="mt-14 h-5 w-48 bg-white/20" />
+        </section>
+        <section className="login-form">
+          <div className="space-y-5">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="mt-8 h-4 w-20" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="mt-4 h-11 w-full" />
+          </div>
+        </section>
+      </main>
+    );
   if (!user) return <Login branding={branding.data || {}} />;
   const permitted = links.filter((l) => user.permissions.includes(l[2]));
   const nav = (
